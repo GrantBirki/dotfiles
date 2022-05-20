@@ -1,0 +1,18 @@
+#!/bin/bash
+############################
+# This script restores all files in the ~/dotfiles_old directory to their original locations
+############################
+
+########## Variables
+
+olddir=~/dotfiles_old # old dotfiles backup directory
+
+##########
+
+# loop through all files in the old directory and restore them to their original locations
+shopt -s dotglob # enable dotglob
+for file in $olddir/*; do
+    nameFmt=$(basename "$file")
+    echo "Moving $nameFmt from $olddir to ~/"
+    mv $file ~/$nameFmt
+done
