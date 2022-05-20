@@ -11,6 +11,8 @@ If you wish to install these files on a brand new machine, simply do the followi
 
 > This will symlink all the defined files in the `script/install` script and backup your current dotfiles so they can be recovered later if something is not working correctly
 
+If anything goes wrong, you can always run `script/restore` to roll back your original dotfiles
+
 ## Table of Contents 📚
 
 - [dotfiles](./dotfiles/)
