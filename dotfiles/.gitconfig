@@ -1,6 +1,7 @@
+# https://github.com/GrantBirki/dotfiles
+
 [core]
 	autocrlf = false
-	excludesfile = /home/grantbirki/.gitignore_global
 [user]
 	email = grantbirki@github.com
 	name = grantbirki
