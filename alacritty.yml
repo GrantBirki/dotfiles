@@ -26,16 +26,16 @@
 # Colors (Darkside)
 colors:
   primary:
-    background: '#0e1019'
+    background: '#1b1c22'
     foreground: '#fffaf4'
 
   # Normal colors
   normal:
     black:    '#000000'
-    red:      '#ff2740'
-    green:    '#8ce10b'
-    yellow:   '#F2D42C'
-    blue:     '#1C98E8'
+    red:      '#f46152'
+    green:    '#26a36b'
+    yellow:   '#a2734c'
+    blue:     '#165bb1'
     magenta:  '#8E69C9'
     cyan:     '#1C98E8'
     white:    '#fffaf4'
@@ -43,10 +43,10 @@ colors:
   # Bright colors
   bright:
     black:    '#666666'
-    red:      '#ff2740'
-    green:    '#8ce10b'
-    yellow:   '#EFD64B'
-    blue:     '#387CD3'
+    red:      '#e03f2f'
+    green:    '#32b47a'
+    yellow:   '#c88e5d'
+    blue:     '#165bb1'
     magenta:  '#957BBE'
     cyan:     '#3D97E2'
     white:    '#fffaf4'
@@ -73,9 +73,9 @@ window:
   #
   # Blank space added around the window in pixels. This padding is scaled
   # by DPI and the specified value is always added at both opposing sides.
-  #padding:
-  #  x: 0
-  #  y: 0
+  padding:
+   x: 5
+   y: 5
 
   # Spread additional padding evenly around the terminal content.
   #dynamic_padding: false
@@ -363,7 +363,7 @@ scrolling:
 # Bell
 #
 # The bell is rung every time the BEL control character is received.
-#bell:
+# bell:
   # Visual Bell Animation
   #
   # Animation effect for flashing the screen when the visual bell is rung.
@@ -379,7 +379,7 @@ scrolling:
   #   - EaseOutExpo
   #   - EaseOutCirc
   #   - Linear
-  #animation: EaseOutExpo
+  # animation: EaseOutExpo
 
   # Duration of the visual bell flash in milliseconds. A `duration` of `0` will
   # disable the visual bell animation.
@@ -446,7 +446,7 @@ cursor:
 
   # Thickness of the cursor relative to the cell width as floating point number
   # from `0.0` to `1.0`.
-  #thickness: 0.15
+  thickness: 0.15
 
 # Live config reload (changes require restart)
 #live_config_reload: true
