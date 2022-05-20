@@ -1,0 +1,17 @@
+[core]
+	autocrlf = false
+	excludesfile = /home/grantbirki/.gitignore_global
+[user]
+	email = grantbirki@github.com
+	name = grantbirki
+	signingkey = 9029BBCCC15C6F8C
+[gpg]
+	program = gpg
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[commit]
+	gpgSign = true
+[pull]
+	rebase = false
+[sequence]
+	editor = code --wait
