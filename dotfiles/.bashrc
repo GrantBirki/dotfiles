@@ -134,6 +134,9 @@ else
     start_agent;
 fi
 
+# Terminal directory
+cd ~/code
+
 # GPG
 export GPG_TTY=$(tty)
 
