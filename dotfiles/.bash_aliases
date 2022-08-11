@@ -16,3 +16,4 @@ alias dockernuke='docker rm -vf $(docker ps -a -q) && docker rmi -f $(docker ima
 alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
 alias pss='ps -auxf | head -1 ; ps -auxf | grep -i'
+alias ssh="TERM=xterm-256color $(which ssh)"
