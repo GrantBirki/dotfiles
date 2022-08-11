@@ -142,3 +142,4 @@ export GPG_TTY=$(tty)
 
 # PATH
 export PATH="$HOME/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
