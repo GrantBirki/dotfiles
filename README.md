@@ -1,6 +1,9 @@
-# dotfiles 📂
+<h1 align="center">dotfiles 📂</h1>
+<p align="center">
+  Dotfiles and general machine / terminal configurations
+</p>
 
-Dotfiles and general machine / terminal configurations
+<h2 align="center"><img src="assets/term.png" alt="terminal" align="center" width="600px" /></h2>
 
 ## Setup ⚙️
 
