@@ -32,3 +32,13 @@ If anything goes wrong, you can always run `script/restore` to roll back your or
 - [dotfiles](./dotfiles/)
 - [alacritty config](./configs/alacritty/alacritty.yml)
 - [management scripts](./script/)
+
+## Screenshots 📸
+
+**MacOS**:
+
+<img width="1013" alt="Screen Shot 2022-08-13 at 10 44 19 PM" src="https://user-images.githubusercontent.com/23362539/184522853-d1dc1e6a-827d-43e5-ae11-ba9327cf0150.png">
+
+**Ubuntu**:
+
+`todo`
