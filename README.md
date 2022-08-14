@@ -5,6 +5,17 @@
 
 <h2 align="center"><img src="assets/term.png" alt="terminal" align="center" width="600px" /></h2>
 
+## About 💡
+
+This repository is a personal collection of my dotfiles for work and fun
+
+These files have been tested to work on the following operating systems:
+
+- Linux
+- MacOS
+
+> Note: All terminal dotfiles are for `bash`
+
 ## Setup ⚙️
 
 If you wish to install these files on a brand new machine, simply do the following:
