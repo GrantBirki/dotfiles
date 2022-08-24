@@ -148,8 +148,8 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 
 # goenv - needs to go towards the bottom as it modifies the PATH
 # https://github.com/syndbg/goenv
-export PATH="$GOENV_ROOT/bin:$PATH"
 export GOENV_ROOT="$HOME/.goenv"
+export PATH="$GOENV_ROOT/bin:$PATH"
 eval "$(goenv init -)"
 export PATH="$GOROOT/bin:$PATH" # must go after -> eval "$(goenv init -)"
 export PATH="$PATH:$GOPATH/bin" # must go after -> eval "$(goenv init -)"
