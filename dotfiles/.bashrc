@@ -145,6 +145,7 @@ export PATH="$HOME/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.rbenv/shims:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
+export PATH="$HOME/.tfenv/bin:$PATH"
 
 # goenv - needs to go towards the bottom as it modifies the PATH
 # https://github.com/syndbg/goenv
