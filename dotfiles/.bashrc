@@ -118,6 +118,23 @@ export PS1="\u@\h \[\e[32m\]\w \[\e[91m\]\$(parse_git_branch)\[\e[00m\]\n$ "
 # Enable tab complete
 bind TAB:menu-complete
 
+# Get OS info
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    os="linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    os="mac"
+elif [[ "$OSTYPE" == "cygwin" ]]; then
+    os="cygwin"
+elif [[ "$OSTYPE" == "msys" ]]; then
+    os="msys"
+elif [[ "$OSTYPE" == "win32" ]]; then
+    os="win"
+elif [[ "$OSTYPE" == "freebsd"* ]]; then
+    os="freebsd"
+else
+    os="unknown"
+fi
+
 # SSH Keys
 SSH_ENV="$HOME/.ssh/agent-environment"
 function start_agent {
@@ -146,6 +163,11 @@ export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.rbenv/shims:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
 export PATH="$HOME/.tfenv/bin:$PATH"
+
+# linuxbrew
+if [[ $os == 'linux' ]]; then
+   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
 
 # goenv - needs to go towards the bottom as it modifies the PATH
 # https://github.com/syndbg/goenv
