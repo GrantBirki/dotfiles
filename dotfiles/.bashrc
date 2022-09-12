@@ -176,3 +176,6 @@ export PATH="$GOENV_ROOT/bin:$PATH"
 eval "$(goenv init -)"
 export PATH="$GOROOT/bin:$PATH" # must go after -> eval "$(goenv init -)"
 export PATH="$PATH:$GOPATH/bin" # must go after -> eval "$(goenv init -)"
+
+# nodenv
+eval "$(nodenv init -)"
