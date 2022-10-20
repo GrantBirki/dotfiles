@@ -33,3 +33,6 @@ Metrics/BlockLength:
 
 Style/CaseLikeIf:
   Enabled: false
+
+Metrics/ParameterLists:
+  Enabled: false
