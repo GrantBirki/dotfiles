@@ -160,6 +160,8 @@ export GPG_TTY=$(tty)
 # PATH
 export PATH="$HOME/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
+
+# rbenv
 export PATH="$HOME/.rbenv/shims:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
 export PATH="$HOME/.tfenv/bin:$PATH"
@@ -179,3 +181,8 @@ export PATH="$PATH:$GOPATH/bin" # must go after -> eval "$(goenv init -)"
 
 # nodenv
 eval "$(nodenv init -)"
+
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"

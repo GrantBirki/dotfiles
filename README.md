@@ -42,4 +42,3 @@ If anything goes wrong, you can always run `script/restore` to roll back your or
 **Ubuntu**:
 
 ![Ubuntu](https://user-images.githubusercontent.com/23362539/186451719-a38a56d9-d309-40b4-b029-eea03c6e3d30.png)
-
