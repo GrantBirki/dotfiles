@@ -146,9 +146,6 @@ else
     start_agent;
 fi
 
-# Terminal directory
-cd ~/code
-
 # GPG
 export GPG_TTY=$(tty)
 
@@ -186,3 +183,8 @@ eval "$(pyenv init -)"
 # cargo / rust
 export PATH="$HOME/.cargo/bin:$PATH"
 . "$HOME/.cargo/env"
+
+# Terminal directory
+# The very last thing I do is set my terminal directory to ~/code
+# It is where all my projects live
+cd ~/code
