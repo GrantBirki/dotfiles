@@ -159,6 +159,8 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # rbenv
 export PATH="$HOME/.rbenv/shims:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
+
+# tfenv
 export PATH="$HOME/.tfenv/bin:$PATH"
 
 # linuxbrew
@@ -181,3 +183,6 @@ eval "$(nodenv init -)"
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+
+# cargo / rust
+. "$HOME/.cargo/env"
