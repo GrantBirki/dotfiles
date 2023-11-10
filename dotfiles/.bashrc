@@ -154,7 +154,6 @@ export GPG_TTY=$(tty)
 
 # PATH
 export PATH="$HOME/bin:$PATH"
-export PATH="$HOME/.cargo/bin:$PATH"
 
 # rbenv
 export PATH="$HOME/.rbenv/shims:$PATH"
@@ -185,4 +184,5 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
 # cargo / rust
+export PATH="$HOME/.cargo/bin:$PATH"
 . "$HOME/.cargo/env"
