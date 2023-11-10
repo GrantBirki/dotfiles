@@ -1,5 +1,7 @@
 # This file is simply a list of all the extensions that I have installed in VSCode
 # Extensions can be listed with `ls ~/.vscode/extensions`
+# According to Stackoverflow, extensions can be installed via `code --install-extension <name>`
+# https://stackoverflow.com/a/51403163/4123012
 
 akamud.vscode-theme-onedark-2.3.0
 aliariff.vscode-erb-beautify-0.4.1
