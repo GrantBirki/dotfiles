@@ -36,3 +36,6 @@ Style/CaseLikeIf:
 
 Metrics/ParameterLists:
   Enabled: false
+
+Style/WordArray:
+  Enabled: false

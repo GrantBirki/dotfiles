@@ -146,19 +146,17 @@ else
     start_agent;
 fi
 
-# Terminal directory
-cd ~/code
-
 # GPG
 export GPG_TTY=$(tty)
 
 # PATH
 export PATH="$HOME/bin:$PATH"
-export PATH="$HOME/.cargo/bin:$PATH"
 
 # rbenv
 export PATH="$HOME/.rbenv/shims:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
+
+# tfenv
 export PATH="$HOME/.tfenv/bin:$PATH"
 
 # linuxbrew
@@ -181,3 +179,12 @@ eval "$(nodenv init -)"
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+
+# cargo / rust
+export PATH="$HOME/.cargo/bin:$PATH"
+. "$HOME/.cargo/env"
+
+# Terminal directory
+# The very last thing I do is set my terminal directory to ~/code
+# It is where all my projects live
+cd ~/code
