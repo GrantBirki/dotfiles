@@ -5,7 +5,7 @@
 [user]
 	email = grantbirki@github.com
 	name = GrantBirki
-	signingkey = 49B739DDF82DE768A571C8AE9029BBCCC15C6F8C
+	signingkey = 96DF969ECBD266FE
 [gpg]
 	program = gpg
 [url "git@github.com:"]

@@ -3,12 +3,24 @@
 # This script creates symlinks from the home directory to any desired dotfiles in ~/dotfiles/dotfiles
 ############################
 
+# Determine if the system is a Mac or Linux
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    echo "Linux detected"
+    gitconfig=".gitconfig_linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "Mac detected"
+    gitconfig=".gitconfig_mac"
+else
+    echo "Unknown OS (or Windows) using defaults"
+    gitconfig=".gitconfig"
+fi
+
 ########## Variables
 
 DOTFILES_REPO_DIR="dotfiles"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )" # dotfiles directory
 OLDDIR=~/dotfiles_old # old dotfiles backup directory
-FILES=".bash_aliases .bash_logout .bashrc .gitconfig .profile .rubocop.yml" # list of files/folders to symlink in homedir
+FILES=".bash_aliases .bash_logout .bashrc $gitconfig .profile .rubocop.yml" # list of files/folders to symlink in homedir
 
 ##########
 
