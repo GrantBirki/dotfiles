@@ -20,7 +20,7 @@ fi
 DOTFILES_REPO_DIR="dotfiles"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )" # dotfiles directory
 OLDDIR=~/dotfiles_old # old dotfiles backup directory
-FILES=".bash_aliases .bash_logout .bashrc $gitconfig .profile .rubocop.yml" # list of files/folders to symlink in homedir
+FILES=".bash_aliases .bash_logout .bashrc .profile .rubocop.yml" # list of files/folders to symlink in homedir
 
 ##########
 
@@ -35,5 +35,11 @@ for file in $FILES; do
     echo "Creating symlink to $file in ~/"
     ln -s $DIR/$DOTFILES_REPO_DIR/$file ~/$file
 done
+
+# custom .gitconfig logic
+echo "Moving any existing .gitconfig from ~/ to $OLDDIR"
+mv ~/.gitconfig ~/dotfiles_old/
+echo "Creating symlink to $gitconfig in ~/"
+ln -s $DIR/$DOTFILES_REPO_DIR/$gitconfig ~/.gitconfig
 
 echo "Done!"
