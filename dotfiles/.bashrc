@@ -184,6 +184,9 @@ eval "$(pyenv init -)"
 export PATH="$HOME/.cargo/bin:$PATH"
 . "$HOME/.cargo/env"
 
+# crystal
+export CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
+
 # Terminal directory
 # The very last thing I do is set my terminal directory to ~/code
 # It is where all my projects live
