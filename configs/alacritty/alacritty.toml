@@ -1,0 +1,64 @@
+# https://github.com/GrantBirki/dotfiles
+
+# Configuration for Alacritty, the GPU enhanced terminal emulator.
+
+[colors.bright]
+black = "#666666"
+blue = "#165bb1"
+cyan = "#3D97E2"
+green = "#32b47a"
+magenta = "#957BBE"
+red = "#e03f2f"
+white = "#fffaf4"
+yellow = "#c88e5d"
+
+[colors.normal]
+black = "#000000"
+blue = "#165bb1"
+cyan = "#1C98E8"
+green = "#26a36b"
+magenta = "#8E69C9"
+red = "#f46152"
+white = "#fffaf4"
+yellow = "#a2734c"
+
+[colors.primary]
+background = "#1b1c22"
+foreground = "#fffaf4"
+
+[cursor]
+thickness = 0.15
+unfocused_hollow = false
+
+[cursor.style]
+blinking = "Off"
+shape = "Beam"
+
+[[keyboard.bindings]]
+action = "Paste"
+key = "V"
+mods = "Command"
+
+[[keyboard.bindings]]
+action = "Paste"
+key = "V"
+mods = "Control"
+
+[[mouse.bindings]]
+action = "PasteSelection"
+mouse = "Right"
+
+[scrolling]
+history = 50000
+
+[selection]
+save_to_clipboard = true
+
+[window]
+dynamic_title = true
+opacity = 1.0
+title = "terminal"
+
+[window.padding]
+x = 5
+y = 5
