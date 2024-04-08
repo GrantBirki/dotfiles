@@ -68,6 +68,12 @@ save_to_clipboard = true
 dynamic_title = true
 opacity = 1
 title = "alacritty"
+[window.dimensions]
+columns = 80
+lines = 35
+
+[font]
+size = 20
 
 [window.padding]
 x = 5

@@ -59,7 +59,13 @@ save_to_clipboard = true
 [window]
 dynamic_title = true
 opacity = 1.0
-title = "terminal"
+title = "alacritty"
+[window.dimensions]
+columns = 80
+lines = 35
+
+[font]
+size = 20
 
 [window.padding]
 x = 5
