@@ -66,8 +66,8 @@ save_to_clipboard = true
 
 [window]
 dynamic_title = true
-opacity = 0.95
-title = "terminal"
+opacity = 1
+title = "alacritty"
 
 [window.padding]
 x = 5
