@@ -2,6 +2,7 @@
 
 # ~/.profile: executed by the command interpreter for login shells.
 # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login exists
+# On my mac devices, I just delete the .bash_profile and .bash_login files and use .bashrc and .profile instead
 
 # the default umask is set in /etc/profile; for setting the umask
 # for ssh logins, install and configure the libpam-umask package.
