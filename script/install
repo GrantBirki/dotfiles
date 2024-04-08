@@ -4,12 +4,15 @@
 ############################
 
 # Determine if the system is a Mac or Linux
+os="unknown"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     echo "Linux detected"
     gitconfig=".gitconfig_linux"
+    os="linux"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     echo "Mac detected"
     gitconfig=".gitconfig_mac"
+    os="mac"
 else
     echo "Unknown OS (or Windows) using defaults"
     gitconfig=".gitconfig"
@@ -35,6 +38,14 @@ for file in $FILES; do
     echo "Creating symlink to $file in ~/"
     ln -s $DIR/$DOTFILES_REPO_DIR/$file ~/$file
 done
+
+# if we are on a mac, symlink the .bashrc file to the .zshrc file
+if [[ $os == "mac" ]]; then
+    echo "Moving any existing .zshrc from ~/ to $OLDDIR"
+    mv ~/.zshrc ~/dotfiles_old/
+    echo "Creating symlink to .zshrc from .bashrc ~/"
+    ln -s $DIR/$DOTFILES_REPO_DIR/.bashrc ~/.zshrc
+fi
 
 # custom .gitconfig logic
 echo "Moving any existing .gitconfig from ~/ to $OLDDIR"

@@ -159,9 +159,14 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 # tfenv
 export PATH="$HOME/.tfenv/bin:$PATH"
 
-# linuxbrew
+# linux config
 if [[ $os == 'linux' ]]; then
-   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# macos config
+if [[ $os == 'mac' ]]; then
+  export BASH_SILENCE_DEPRECATION_WARNING=1
 fi
 
 # goenv - needs to go towards the bottom as it modifies the PATH
@@ -186,8 +191,3 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 # crystal
 export CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
-
-# Terminal directory
-# The very last thing I do is set my terminal directory to ~/code
-# It is where all my projects live
-cd ~/code
