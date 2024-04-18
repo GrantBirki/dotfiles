@@ -190,4 +190,6 @@ export PATH="$HOME/.cargo/bin:$PATH"
 . "$HOME/.cargo/env"
 
 # crystal
+export PATH="$HOME/.crenv/bin:$PATH"
+eval "$(crenv init -)"
 export CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
