@@ -192,3 +192,4 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # crystal
 export PATH="$HOME/.crenv/bin:$PATH"
 eval "$(crenv init -)"
+export CRENV_ROOT="$HOME/.crenv"
