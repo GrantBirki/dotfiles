@@ -192,5 +192,3 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # crystal
 export PATH="$HOME/.crenv/bin:$PATH"
 eval "$(crenv init -)"
-export CRYSTAL_OPTS="--link-flags=-W"
-export SHARDS_CACHE_PATH=".cache/shards"
