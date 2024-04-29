@@ -74,6 +74,15 @@ lines = 40
 
 [font]
 size = 18
+[font.normal]
+
+# meslo font details:
+# - https://github.com/andreberg/Meslo-Font
+# - https://www.nerdfonts.com/font-downloads
+# - install it: $ sudo cp -R ~/Downloads/Meslo /usr/share/fonts/truetype/ (you may need to update permissions on the font files)
+# - update font cache: $ sudo fc-cache -f -v
+family = "MesloLGS Nerd Font Mono"
+# family = "Noto Sans Mono" # alt font
 
 [window.padding]
 x = 5
