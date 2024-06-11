@@ -190,11 +190,13 @@ export PATH="$HOME/.cargo/bin:$PATH"
 . "$HOME/.cargo/env"
 
 # crystal
-export PATH="$HOME/.crenv/bin:$PATH"
-eval "$(crenv init -)"
-export CRENV_ROOT="$HOME/.crenv"
 if [[ $os == 'mac' ]]; then
   # due to -> https://github.com/crystal-lang/crystal/issues/13846
   # if this issue gets fixed, this line can probably be removed
   export CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
+else
+  # I don't use crenv on macos, so only run this on linux
+  export PATH="$HOME/.crenv/bin:$PATH"
+  eval "$(crenv init -)"
+  export CRENV_ROOT="$HOME/.crenv"
 fi
