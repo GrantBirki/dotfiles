@@ -43,8 +43,8 @@ done
 if [[ $os == "mac" ]]; then
     echo "Moving any existing .zshrc from ~/ to $OLDDIR"
     mv ~/.zshrc ~/dotfiles_old/
-    echo "Creating symlink to .zshrc from .bashrc ~/"
-    ln -s $DIR/$DOTFILES_REPO_DIR/.bashrc ~/.zshrc
+    # echo "Creating symlink to .zshrc from .bashrc ~/"
+    # ln -s $DIR/$DOTFILES_REPO_DIR/.bashrc ~/.zshrc
 fi
 
 # custom .gitconfig logic
