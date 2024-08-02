@@ -3,7 +3,7 @@
 # Configuration for Alacritty, the GPU enhanced terminal emulator.
 
 live_config_reload = true
-working_directory = "/Users/grantbirkinbine/code" # you must use the full path here
+working_directory = "/Users/birki/code" # you must use the full path here
 
 [shell]
 program = "/bin/bash"
