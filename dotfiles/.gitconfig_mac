@@ -5,13 +5,13 @@
 [user]
 	email = grantbirki@github.com
 	name = GrantBirki
-	signingkey = 96DF969ECBD266FE
+	signingkey = 65497A530F6F9405
 [gpg]
 	program = gpg
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [commit]
-	gpgSign = true
+	gpgsign = true
 [pull]
 	rebase = false
 [sequence]
