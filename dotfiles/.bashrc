@@ -167,6 +167,7 @@ fi
 # macos config
 if [[ $os == 'mac' ]]; then
   export BASH_SILENCE_DEPRECATION_WARNING=1
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
 # goenv - needs to go towards the bottom as it modifies the PATH
