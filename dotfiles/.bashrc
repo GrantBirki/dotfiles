@@ -197,6 +197,7 @@ if [[ $os == 'mac' ]]; then
   export CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
 else
   # I don't use crenv on macos, so only run this on linux
+  # crenv on macos lacks support, especially for arm64
   export PATH="$HOME/.crenv/bin:$PATH"
   eval "$(crenv init -)"
   export CRENV_ROOT="$HOME/.crenv"
