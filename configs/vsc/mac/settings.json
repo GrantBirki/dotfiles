@@ -1,166 +1,247 @@
 {
+    "editor.bracketPairColorization.enabled": true,
     "terminal.integrated.shell.windows": "C:\\Windows\\System32\\cmd.exe",
     "git.enableSmartCommit": true,
     "git.confirmSync": false,
     "editor.wordWrap": "on",
     "workbench.startupEditor": "newUntitledFile",
     "explorer.confirmDelete": false,
-    "python.pythonPath": "C:\\Python38\\python.exe",
     "workbench.iconTheme": "material-icon-theme",
     "code-runner.saveFileBeforeRun": true,
     "code-runner.clearPreviousOutput": true,
-    "window.zoomLevel": 2,
     "oneDarkPro.vivid": true,
     "explorer.confirmDragAndDrop": false,
-    "python.defaultInterpreterPath": "C:\\Python38\\python.exe",
     "diffEditor.ignoreTrimWhitespace": false,
     "python.showStartPage": false,
     "jshint.options": {
-        "esversion": 8
+      "esversion": 8
     },
     "jshint.excludePath": "",
     "editor.mouseWheelZoom": true,
     "gitlens.advanced.messages": {
-        "suppressCommitHasNoPreviousCommitWarning": true
+      "suppressCommitHasNoPreviousCommitWarning": true,
+      "suppressIntegrationRequestTimedOutWarning": true
     },
     "bracket-pair-colorizer-2.excludedLanguages": [
-        "python.defaultInterpreterPath"
+      "python.defaultInterpreterPath"
     ],
+    "go.toolsEnvVars": {
+      "GO111MODULE": "auto"
+    },
     "vs-kubernetes": {
-        "vs-kubernetes.minikube-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\minikube\\windows-amd64\\minikube.exe",
-        "vs-kubernetes.helm-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\helm\\windows-amd64\\helm.exe",
-        "vs-kubernetes.draft-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\draft\\windows-amd64\\draft.exe",
-        "vscode-kubernetes.minikube-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\minikube\\windows-amd64\\minikube.exe",
-        "vscode-kubernetes.helm-path.linux": "/home/grantbirki/.vs-kubernetes/tools/helm/linux-amd64/helm",
-        "vscode-kubernetes.kubectl-path.linux": "/home/grantbirki/.vs-kubernetes/tools/kubectl/kubectl",
-        "vscode-kubernetes.minikube-path.linux": "/home/grantbirki/.vs-kubernetes/tools/minikube/linux-amd64/minikube",
-        "vscode-kubernetes.helm-path.mac": "/Users/grantbirkinbine/.vs-kubernetes/tools/helm/darwin-amd64/helm",
-        "vscode-kubernetes.kubectl-path.mac": "/Users/grantbirkinbine/.vs-kubernetes/tools/kubectl/kubectl",
-        "vscode-kubernetes.minikube-path.mac": "/Users/grantbirkinbine/.vs-kubernetes/tools/minikube/darwin-amd64/minikube"
+      "vs-kubernetes.minikube-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\minikube\\windows-amd64\\minikube.exe",
+      "vs-kubernetes.helm-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\helm\\windows-amd64\\helm.exe",
+      "vs-kubernetes.draft-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\draft\\windows-amd64\\draft.exe",
+      "vscode-kubernetes.minikube-path.windows": "C:\\Users\\Birki\\.vs-kubernetes\\tools\\minikube\\windows-amd64\\minikube.exe",
+      "vscode-kubernetes.helm-path.linux": "/home/grantbirki/.vs-kubernetes/tools/helm/linux-amd64/helm",
+      "vscode-kubernetes.kubectl-path.linux": "/home/grantbirki/.vs-kubernetes/tools/kubectl/kubectl",
+      "vscode-kubernetes.minikube-path.linux": "/home/grantbirki/.vs-kubernetes/tools/minikube/linux-amd64/minikube",
+      "vscode-kubernetes.helm-path.mac": "/Users/grantbirkinbine/.vs-kubernetes/tools/helm/darwin-amd64/helm",
+      "vscode-kubernetes.kubectl-path.mac": "/Users/grantbirkinbine/.vs-kubernetes/tools/kubectl/kubectl",
+      "vscode-kubernetes.minikube-path.mac": "/Users/grantbirkinbine/.vs-kubernetes/tools/minikube/darwin-amd64/minikube"
     },
     "workbench.editorAssociations": {
-        "*.ipynb": "jupyter-notebook"
+      "*.ipynb": "jupyter-notebook"
     },
     "liveServer.settings.donotShowInfoMsg": true,
     "[terraform]": {
-        "editor.defaultFormatter": "hashicorp.terraform"
+      "editor.defaultFormatter": "hashicorp.terraform"
     },
     "code-runner.executorMap": {
-        "javascript": "node",
-        "java": "cd $dir && javac $fileName && java $fileNameWithoutExt",
-        "c": "cd $dir && gcc $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-        "cpp": "cd $dir && g++ $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-        "objective-c": "cd $dir && gcc -framework Cocoa $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-        "php": "php",
-        "python": "python3 -u",
-        "perl": "perl",
-        "perl6": "perl6",
-        "ruby": "ruby",
-        "go": "go run",
-        "lua": "lua",
-        "groovy": "groovy",
-        "powershell": "powershell -ExecutionPolicy ByPass -File",
-        "bat": "cmd /c",
-        "shellscript": "bash",
-        "fsharp": "fsi",
-        "csharp": "scriptcs",
-        "vbscript": "cscript //Nologo",
-        "typescript": "ts-node",
-        "coffeescript": "coffee",
-        "scala": "scala",
-        "swift": "swift",
-        "julia": "julia",
-        "crystal": "crystal",
-        "ocaml": "ocaml",
-        "r": "Rscript",
-        "applescript": "osascript",
-        "clojure": "lein exec",
-        "haxe": "haxe --cwd $dirWithoutTrailingSlash --run $fileNameWithoutExt",
-        "rust": "cd $dir && rustc $fileName && $dir$fileNameWithoutExt",
-        "racket": "racket",
-        "scheme": "csi -script",
-        "ahk": "autohotkey",
-        "autoit": "autoit3",
-        "dart": "dart",
-        "pascal": "cd $dir && fpc $fileName && $dir$fileNameWithoutExt",
-        "d": "cd $dir && dmd $fileName && $dir$fileNameWithoutExt",
-        "haskell": "runhaskell",
-        "nim": "nim compile --verbosity:0 --hints:off --run",
-        "lisp": "sbcl --script",
-        "kit": "kitc --run",
-        "v": "v run",
-        "sass": "sass --style expanded",
-        "scss": "scss --style expanded",
-        "less": "cd $dir && lessc $fileName $fileNameWithoutExt.css",
-        "FortranFreeForm": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-        "fortran-modern": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-        "fortran_fixed-form": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-        "fortran": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt"
+      "javascript": "node",
+      "java": "cd $dir && javac $fileName && java $fileNameWithoutExt",
+      "c": "cd $dir && gcc $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+      "cpp": "cd $dir && g++ $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+      "objective-c": "cd $dir && gcc -framework Cocoa $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+      "php": "php",
+      "perl": "perl",
+      "perl6": "perl6",
+      "ruby": "ruby",
+      "go": "go run",
+      "lua": "lua",
+      "groovy": "groovy",
+      "powershell": "powershell -ExecutionPolicy ByPass -File",
+      "bat": "cmd /c",
+      "shellscript": "bash",
+      "fsharp": "fsi",
+      "csharp": "scriptcs",
+      "vbscript": "cscript //Nologo",
+      "typescript": "ts-node",
+      "coffeescript": "coffee",
+      "scala": "scala",
+      "swift": "swift",
+      "julia": "julia",
+      "crystal": "crystal",
+      "ocaml": "ocaml",
+      "r": "Rscript",
+      "applescript": "osascript",
+      "clojure": "lein exec",
+      "haxe": "haxe --cwd $dirWithoutTrailingSlash --run $fileNameWithoutExt",
+      "rust": "cd $dir && rustc $fileName && $dir$fileNameWithoutExt",
+      "racket": "racket",
+      "scheme": "csi -script",
+      "ahk": "autohotkey",
+      "autoit": "autoit3",
+      "dart": "dart",
+      "pascal": "cd $dir && fpc $fileName && $dir$fileNameWithoutExt",
+      "d": "cd $dir && dmd $fileName && $dir$fileNameWithoutExt",
+      "haskell": "runhaskell",
+      "nim": "nim compile --verbosity:0 --hints:off --run",
+      "lisp": "sbcl --script",
+      "kit": "kitc --run",
+      "v": "v run",
+      "sass": "sass --style expanded",
+      "scss": "scss --style expanded",
+      "less": "cd $dir && lessc $fileName $fileNameWithoutExt.css",
+      "FortranFreeForm": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+      "fortran-modern": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+      "fortran_fixed-form": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
+      "fortran": "cd $dir && gfortran $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt"
     },
     "activestate.statePath": "/home/codespace/.local/bin/state",
-    "ruby.codeCompletion": "rcodetools",
     "ruby.lint": {
-    "rubocop": true
+      "rubocop": true
     },
     "git.autofetch": true,
     "editor.inlineSuggest.enabled": true,
     "notebook.cellToolbarLocation": {
-        "default": "right",
-        "jupyter-notebook": "left"
+      "default": "right",
+      "jupyter-notebook": "left"
     },
     "python.analysis.diagnosticSeverityOverrides": {
-        "reportMissingImports": "none"
+      "reportMissingImports": "none"
     },
     "redhat.telemetry.enabled": false,
-    "ruby.rubocop.executePath": "/Users/grantbirkinbine/.rbenv/shims/",
-    "ruby.rubocop.configFilePath": "/Users/grantbirkinbine/.rubocop.yml",
+    "ruby.rubocop.executePath": "~/.rbenv/shims/",
+    "ruby.rubocop.configFilePath": "~/.rubocop.yml",
     "github.copilot.enable": {
-        "*": true,
-        "yaml": true,
-        "plaintext": true,
-        "markdown": true
+      "*": true,
+      "yaml": true,
+      "plaintext": true,
+      "markdown": true,
+      "ruby": true
     },
     "python.autoComplete.addBrackets": true,
     "python.analysis.completeFunctionParens": true,
-    "bracket-pair-colorizer-2.depreciation-notice": false,
-    "files.insertFinalNewline": true,
-    "githubPullRequests.createOnPublishBranch": "never",
-    "githubPullRequests.pullBranch": "never",
-    "[javascript]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features"
+    "liveServer.settings.CustomBrowser": "firefox",
+    "[erb]": {
+      "editor.defaultFormatter": "aliariff.vscode-erb-beautify"
     },
-    "[yaml]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "bracket-pair-colorizer-2.depreciation-notice": false,
+    "githubPullRequests.createOnPublishBranch": "never",
+  "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "githubPullRequests.pullBranch": "never",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
-    },
-    "go.languageServerExperimentalFeatures": {
-        "diagnostics": false
-    },
-    "ruby.rubocop.useBundler": true,
-    "[astro]": {
-        "editor.defaultFormatter": "astro-build.astro-vscode"
+      "editor.defaultFormatter": "vscode.json-language-features"
     },
     "[html]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      "editor.defaultFormatter": "vscode.html-language-features"
     },
-    "[python]": {
-        "editor.formatOnType": true
-    },
-    "cSpell.userWords": [
-        "birki",
-        "grantbirki",
-        "wcid"
-    ],
-    "[jsonc]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
+    "[yaml]": {
+      "editor.defaultFormatter": "redhat.vscode-yaml"
     },
     "[dockercompose]": {
-        "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "[jsonc]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[python]": {
+      "editor.formatOnType": true,
+    },
+    "[astro]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "cSpell.userWords": [
+      "Apashe",
+      "Bataclan",
+      "Birkenau",
+      "birki",
+      "Birkinbine",
+      "brûlée",
+      "Caragol",
+      "Caragols",
+      "Eléonore",
+      "haha",
+      "HLJS",
+      "Leonie",
+      "Oswiecim",
+      "Pancras",
+      "papermod"
+    ],
     "[javascriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "github.copilot.advanced": {}
-}
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "[ruby]": {
+      "editor.defaultFormatter": "misogi.ruby-rubocop",
+      "editor.formatOnSave": true,
+      "editor.formatOnType": true,
+      "editor.tabSize": 2,
+      "editor.insertSpaces": true,
+      "files.trimTrailingWhitespace": true,
+      "files.insertFinalNewline": true,
+      "files.trimFinalNewlines": true,
+      "editor.rulers": [
+        120
+      ],
+      "editor.semanticHighlighting.enabled": true
+    },
+    "[gemfile]": {},
+    "files.exclude": {
+      "**/.ruby-lsp": false
+    },
+    "ruby.format": false,
+    "ruby.rubocop.useBundler": true,
+    "rubyLsp.rubyVersionManager": {
+      "identifier": "rbenv"
+    },
+    "rubyLsp.enabledFeatures": {
+      "codeActions": true,
+      "diagnostics": true,
+      "documentHighlights": true,
+      "documentLink": true,
+      "documentSymbols": true,
+      "foldingRanges": true,
+      "formatting": true,
+      "hover": true,
+      "inlayHint": true,
+      "onTypeFormatting": true,
+      "selectionRanges": true,
+      "semanticHighlighting": true,
+      "completion": true,
+      "codeLens": true,
+      "definition": true,
+      "workspaceSymbol": true,
+      "references": true
+    },
+    "emojisense.languages": {
+      "markdown": true,
+      "plaintext": {
+        "markupCompletionsEnabled": false,
+        "emojiDecoratorsEnabled": false
+      },
+      "scminput": true,
+      "git-commit": true
+    },
+    "git.replaceTagsWhenPull": true,
+    "[crystal]": {},
+    "crystal-lang.server": "/opt/homebrew/bin/crystalline",
+    "gitlens.launchpad.indicator.enabled": false,
+    "github.copilot.editor.enableAutoCompletions": true,
+    "go.toolsManagement.autoUpdate": true,
+    "settingsSync.ignoredExtensions": [
+      "misogi.ruby-rubocop"
+    ],
+    "settingsSync.ignoredSettings": [
+      "crystal-lang.server"
+    ],
+    "git.openRepositoryInParentFolders": "never",
+    "material-icon-theme.languages.associations": {}
+  }
+  
