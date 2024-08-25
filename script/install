@@ -45,6 +45,17 @@ if [[ $os == "mac" ]]; then
     mv ~/.zshrc ~/dotfiles_old/
     # echo "Creating symlink to .zshrc from .bashrc ~/"
     # ln -s $DIR/$DOTFILES_REPO_DIR/.bashrc ~/.zshrc
+
+    # move karabiner.json to the correct location if the .config/karabiner directory exists
+    if [ -d ~/.config/karabiner ]; then
+        echo "Moving any existing karabiner.json from ~/ to $OLDDIR/.config/karabiner"
+        mkdir -p ~/dotfiles_old/.config/karabiner
+        mv ~/.config/karabiner/karabiner.json ~/dotfiles_old/.config/karabiner/
+        echo "Creating symlink to karabiner.json in ~/.config/karabiner"
+        ln -s $DIR/configs/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
+    else
+        echo "No karabiner.json found in ~/.config/karabiner - it will be skipped"
+    fi
 fi
 
 # custom .gitconfig logic

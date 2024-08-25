@@ -168,6 +168,12 @@ fi
 if [[ $os == 'mac' ]]; then
   export BASH_SILENCE_DEPRECATION_WARNING=1
   eval "$(/opt/homebrew/bin/brew shellenv)"
+
+  # Bind Ctrl+Left Arrow to move backward by word
+  bind '"\e[1;5D": backward-word'
+
+  # Bind Ctrl+Right Arrow to move forward by word
+  bind '"\e[1;5C": forward-word'
 fi
 
 # goenv - needs to go towards the bottom as it modifies the PATH
