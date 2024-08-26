@@ -4,6 +4,26 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "Map PrintScreen to Cmd+Shift+4",
+                        "manipulators": [
+                            {
+                                "type": "basic",
+                                "from": {
+                                    "key_code": "print_screen"
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "4",
+                                        "modifiers": [
+                                            "command",
+                                            "shift"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
                         "description": "Map Ctrl+Shift+4 to Cmd+Shift+4",
                         "manipulators": [
                             {
