@@ -23,7 +23,7 @@ fi
 DOTFILES_REPO_DIR="dotfiles"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )" # dotfiles directory
 OLDDIR=~/dotfiles_old # old dotfiles backup directory
-FILES=".bash_aliases .bash_logout .bashrc .profile .rubocop.yml" # list of files/folders to symlink in homedir
+FILES=".bash_aliases .bash_logout .bashrc .profile .rubocop.yml .irbrc" # list of files/folders to symlink in homedir
 
 ##########
 
