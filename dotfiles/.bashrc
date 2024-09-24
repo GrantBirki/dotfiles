@@ -208,3 +208,5 @@ else
   eval "$(crenv init -)"
   export CRENV_ROOT="$HOME/.crenv"
 fi
+# https://github.com/GrantBirki/crystal-base-template/pull/11/commits/4481750a1dae141832f76ad0d79137cdb385852e
+export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
