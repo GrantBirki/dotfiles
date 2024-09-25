@@ -198,9 +198,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 # crystal
 if [[ $os == 'mac' ]]; then
-  # due to -> https://github.com/crystal-lang/crystal/issues/13846
-  # if this issue gets fixed, this line can probably be removed
-  export CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
+  export CRYSTAL_OPTS="--link-flags=-Wl"
 else
   # I don't use crenv on macos, so only run this on linux
   # crenv on macos lacks support, especially for arm64
