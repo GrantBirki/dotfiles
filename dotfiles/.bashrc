@@ -208,3 +208,12 @@ else
 fi
 # https://github.com/GrantBirki/crystal-base-template/pull/11/commits/4481750a1dae141832f76ad0d79137cdb385852e
 export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
+
+# if the ~/.local/bin/ directory doesn't exist, create it
+if [ ! -d "$HOME/.local/bin" ]; then
+  echo "first time setup: creating ~/.local/bin directory"
+  mkdir -p "$HOME/.local/bin"
+fi
+
+# add ~/.local/bin/ to the PATH as it is where my custom binaries are stored
+export PATH="$HOME/.local/bin:$PATH"
