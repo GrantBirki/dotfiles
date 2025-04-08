@@ -17,3 +17,8 @@ alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
 alias pss='ps -auxf | head -1 ; ps -auxf | grep -i'
 alias ssh="TERM=xterm-256color $(which ssh)"
+
+# if the platform is mac, use the mac aliases
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+fi
