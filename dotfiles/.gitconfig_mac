@@ -11,8 +11,13 @@
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [commit]
-	gpgsign = true
+	gpgSign = true
 [pull]
 	rebase = false
 [sequence]
 	editor = code --wait
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
