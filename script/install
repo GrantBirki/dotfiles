@@ -3,6 +3,10 @@
 # This script creates symlinks from the home directory to any desired dotfiles in ~/dotfiles/dotfiles
 ############################
 
+if [[ "$CODESPACES" == "true" ]]; then
+    echo "detected GitHub codespace"
+fi
+
 # Determine if the system is a Mac or Linux
 os="unknown"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
