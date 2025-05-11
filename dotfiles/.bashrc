@@ -4,8 +4,8 @@
 
 # If not running interactively, don't do anything
 case $- in
-    *i*) ;;
-      *) return;;
+  *i*) ;;
+    *) return;;
 esac
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
@@ -27,12 +27,12 @@ shopt -s checkwinsize
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
+  debian_chroot=$(cat /etc/debian_chroot)
 fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+  xterm-color|*-256color) color_prompt=yes;;
 esac
 
 # uncomment for a colored prompt, if the terminal has the capability; turned
@@ -40,42 +40,42 @@ esac
 # should be on the output of commands, not on the prompt
 #force_color_prompt=yes
 if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
+  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # We have color support; assume it's compliant with Ecma-48
+    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+    # a case would tend to support setf rather than setaf.)
+    color_prompt=yes
+  else
+    color_prompt=
+  fi
 fi
 
 if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
+  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\n\$ '
+  PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\n\$ '
 fi
 unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm*|rxvt*)
+  xterm*|rxvt*)
     PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
     ;;
-*)
+  *)
     ;;
 esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
+  test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+  alias ls='ls --color=auto'
+  #alias dir='dir --color=auto'
+  #alias vdir='vdir --color=auto'
 
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
+  alias grep='grep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias egrep='egrep --color=auto'
 fi
 
 # colored GCC warnings and errors
@@ -90,7 +90,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # ~/.bash_aliases, instead of adding them here directly.
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
+  . ~/.bash_aliases
 fi
 
 # enable programmable completion features (you don't need to enable
@@ -115,37 +115,37 @@ bind TAB:menu-complete
 
 # Get OS info
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    os="linux"
+  os="linux"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    os="mac"
+  os="mac"
 elif [[ "$OSTYPE" == "cygwin" ]]; then
-    os="cygwin"
+  os="cygwin"
 elif [[ "$OSTYPE" == "msys" ]]; then
-    os="msys"
+  os="msys"
 elif [[ "$OSTYPE" == "win32" ]]; then
-    os="win"
+  os="win"
 elif [[ "$OSTYPE" == "freebsd"* ]]; then
-    os="freebsd"
+  os="freebsd"
 else
-    os="unknown"
+  os="unknown"
 fi
 
 # SSH Keys
 if [[ "$CODESPACES" != "true" ]]; then
-SSH_ENV="$HOME/.ssh/agent-environment"
-function start_agent {
+  SSH_ENV="$HOME/.ssh/agent-environment"
+  function start_agent {
     /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}" > /dev/null
-}
-if [ -f "${SSH_ENV}" ]; then
+  }
+  if [ -f "${SSH_ENV}" ]; then
     . "${SSH_ENV}" > /dev/null
     ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-        start_agent;
+      start_agent;
     }
-else
+  else
     start_agent;
-fi
+  fi
 fi
 
 # GPG
@@ -155,12 +155,12 @@ export GPG_TTY=$(tty)
 export PATH="$HOME/bin:$PATH"
 
 if [[ "$CODESPACES" != "true" ]]; then
-# rbenv
-export PATH="$HOME/.rbenv/shims:$PATH"
-export PATH="$HOME/.rbenv/bin:$PATH"
+  # rbenv
+  export PATH="$HOME/.rbenv/shims:$PATH"
+  export PATH="$HOME/.rbenv/bin:$PATH"
 
-# tfenv
-export PATH="$HOME/.tfenv/bin:$PATH"
+  # tfenv
+  export PATH="$HOME/.tfenv/bin:$PATH"
 fi
 
 # linux config
@@ -181,38 +181,38 @@ if [[ $os == 'mac' && "$CODESPACES" != "true" ]]; then
 fi
 
 if [[ "$CODESPACES" != "true" ]]; then
-# goenv - needs to go towards the bottom as it modifies the PATH
-# https://github.com/syndbg/goenv
-export GOENV_ROOT="$HOME/.goenv"
-export PATH="$GOENV_ROOT/bin:$PATH"
-eval "$(goenv init -)"
-export PATH="$GOROOT/bin:$PATH" # must go after -> eval "$(goenv init -)"
-export PATH="$PATH:$GOPATH/bin" # must go after -> eval "$(goenv init -)"
+  # goenv - needs to go towards the bottom as it modifies the PATH
+  # https://github.com/syndbg/goenv
+  export GOENV_ROOT="$HOME/.goenv"
+  export PATH="$GOENV_ROOT/bin:$PATH"
+  eval "$(goenv init -)"
+  export PATH="$GOROOT/bin:$PATH" # must go after -> eval "$(goenv init -)"
+  export PATH="$PATH:$GOPATH/bin" # must go after -> eval "$(goenv init -)"
 
-# nodenv
-eval "$(nodenv init -)"
+  # nodenv
+  eval "$(nodenv init -)"
 
-# pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+  # pyenv
+  export PYENV_ROOT="$HOME/.pyenv"
+  export PATH="$PYENV_ROOT/bin:$PATH"
+  eval "$(pyenv init -)"
 
-# cargo / rust
-export PATH="$HOME/.cargo/bin:$PATH"
-. "$HOME/.cargo/env"
+  # cargo / rust
+  export PATH="$HOME/.cargo/bin:$PATH"
+  . "$HOME/.cargo/env"
 
-# crystal
-if [[ $os == 'mac' ]]; then
-  export CRYSTAL_OPTS="--link-flags=-Wl"
-else
-  # I don't use crenv on macos, so only run this on linux
-  # crenv on macos lacks support, especially for arm64
-  export PATH="$HOME/.crenv/bin:$PATH"
-  eval "$(crenv init -)"
-  export CRENV_ROOT="$HOME/.crenv"
-fi
-# https://github.com/GrantBirki/crystal-base-template/pull/11/commits/4481750a1dae141832f76ad0d79137cdb385852e
-export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
+  # crystal
+  if [[ $os == 'mac' ]]; then
+    export CRYSTAL_OPTS="--link-flags=-Wl"
+  else
+    # I don't use crenv on macos, so only run this on linux
+    # crenv on macos lacks support, especially for arm64
+    export PATH="$HOME/.crenv/bin:$PATH"
+    eval "$(crenv init -)"
+    export CRENV_ROOT="$HOME/.crenv"
+  fi
+  # https://github.com/GrantBirki/crystal-base-template/pull/11/commits/4481750a1dae141832f76ad0d79137cdb385852e
+  export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
 fi
 
 # if the ~/.local/bin/ directory doesn't exist, create it
