@@ -77,6 +77,6 @@ else
     echo "CODESPACES detected: skipping .gitconfig symlink."
 fi
 
-source ~/.bashrc
+echo "Make sure to run 'source ~/.bashrc' to finish applying changes."
 
 echo "Done!"
