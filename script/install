@@ -5,6 +5,7 @@
 
 if [[ "$CODESPACES" == "true" ]]; then
     echo "detected GitHub codespace"
+    # ~/.vscode-remote might need to be deleted
 fi
 
 # Determine if the system is a Mac or Linux
