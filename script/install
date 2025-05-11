@@ -67,9 +67,16 @@ if [[ $os == "mac" ]]; then
 fi
 
 # custom .gitconfig logic
-echo "Moving any existing .gitconfig from ~/ to $OLDDIR"
-mv ~/.gitconfig ~/dotfiles_old/
-echo "Creating symlink to $gitconfig in ~/"
-ln -s $DIR/$DOTFILES_REPO_DIR/$gitconfig ~/.gitconfig
+if [[ "$CODESPACES" != "true" ]]; then
+    echo "Moving any existing .gitconfig from ~/ to $OLDDIR"
+    mv ~/.gitconfig ~/dotfiles_old/
+    echo "Creating symlink to $gitconfig in ~/"
+    ln -s $DIR/$DOTFILES_REPO_DIR/$gitconfig ~/.gitconfig
+else
+    # If we don't skip it, it almost always breaks commit signing / pushes
+    echo "CODESPACES detected: skipping .gitconfig symlink."
+fi
+
+source ~/.bashrc
 
 echo "Done!"
