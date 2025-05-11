@@ -131,6 +131,7 @@ else
 fi
 
 # SSH Keys
+if [[ "$CODESPACES" != "true" ]]; then
 SSH_ENV="$HOME/.ssh/agent-environment"
 function start_agent {
     /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
@@ -145,6 +146,7 @@ if [ -f "${SSH_ENV}" ]; then
 else
     start_agent;
 fi
+fi
 
 # GPG
 export GPG_TTY=$(tty)
@@ -152,20 +154,22 @@ export GPG_TTY=$(tty)
 # PATH
 export PATH="$HOME/bin:$PATH"
 
+if [[ "$CODESPACES" != "true" ]]; then
 # rbenv
 export PATH="$HOME/.rbenv/shims:$PATH"
 export PATH="$HOME/.rbenv/bin:$PATH"
 
 # tfenv
 export PATH="$HOME/.tfenv/bin:$PATH"
+fi
 
 # linux config
-if [[ $os == 'linux' ]]; then
+if [[ $os == 'linux' && "$CODESPACES" != "true" ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
 # macos config
-if [[ $os == 'mac' ]]; then
+if [[ $os == 'mac' && "$CODESPACES" != "true" ]]; then
   export BASH_SILENCE_DEPRECATION_WARNING=1
   eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -176,6 +180,7 @@ if [[ $os == 'mac' ]]; then
   bind '"\e[1;5C": forward-word'
 fi
 
+if [[ "$CODESPACES" != "true" ]]; then
 # goenv - needs to go towards the bottom as it modifies the PATH
 # https://github.com/syndbg/goenv
 export GOENV_ROOT="$HOME/.goenv"
@@ -208,6 +213,7 @@ else
 fi
 # https://github.com/GrantBirki/crystal-base-template/pull/11/commits/4481750a1dae141832f76ad0d79137cdb385852e
 export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
+fi
 
 # if the ~/.local/bin/ directory doesn't exist, create it
 if [ ! -d "$HOME/.local/bin" ]; then
