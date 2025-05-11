@@ -5,6 +5,7 @@
 
 if [[ "$CODESPACES" == "true" ]]; then
     echo "detected GitHub codespace"
+    # ~/.vscode-remote might need to be deleted
 fi
 
 # Determine if the system is a Mac or Linux
@@ -77,6 +78,6 @@ else
     echo "CODESPACES detected: skipping .gitconfig symlink."
 fi
 
-source ~/.bashrc
+echo "Make sure to run 'source ~/.bashrc' to finish applying changes."
 
 echo "Done!"
