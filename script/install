@@ -62,8 +62,20 @@ if [[ $os == "mac" ]]; then
         mv ~/.config/karabiner/karabiner.json ~/dotfiles_old/.config/karabiner/
         echo "Creating symlink to karabiner.json in ~/.config/karabiner"
         ln -s $DIR/configs/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
+        echo "Note: select ANSI if prompted by Karabiner-Elements"
     else
         echo "No karabiner.json found in ~/.config/karabiner - it will be skipped"
+    fi
+
+    # move configs/alacritty/alacritty_mac.toml to the correct location if the .config/alacritty directory exists
+    if [ -d ~/.config/alacritty ]; then
+        echo "Moving any existing alacritty config from ~/ to $OLDDIR/.config/alacritty"
+        mkdir -p ~/dotfiles_old/.config/alacritty
+        mv ~/.config/alacritty/alacritty.toml ~/dotfiles_old/.config/alacritty/
+        echo "Creating symlink to alacritty config in ~/.config/alacritty"
+        ln -s $DIR/configs/alacritty/alacritty_mac.toml ~/.config/alacritty/alacritty.toml
+    else
+        echo "No alacritty config found in ~/.config/alacritty - it will be skipped"
     fi
 fi
 

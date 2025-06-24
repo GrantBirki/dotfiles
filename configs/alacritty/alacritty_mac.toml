@@ -54,6 +54,16 @@ action = "Paste"
 key = "V"
 mods = "Control"
 
+[[keyboard.bindings]]
+action = "CreateNewTab"
+key = "T"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "CreateNewWindow"
+key = "N"
+mods = "Control"
+
 [[mouse.bindings]]
 action = "PasteSelection"
 mouse = "Right"
