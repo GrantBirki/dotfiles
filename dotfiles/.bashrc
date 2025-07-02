@@ -181,6 +181,8 @@ if [[ "$CODESPACES" != "true" ]]; then
 
   # goenv - needs to go towards the bottom as it modifies the PATH
   # https://github.com/go-nv/goenv
+  # for usage in visual studio code: https://github.com/go-nv/goenv/issues/293#issuecomment-2248260404
+  # running `$ goenv rehash` often and fully rebooting vscode is a must
   export GOENV_ROOT="$HOME/.goenv"
   export PATH="$GOENV_ROOT/bin:$PATH"
   eval "$(goenv init -)"
