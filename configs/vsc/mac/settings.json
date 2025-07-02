@@ -247,7 +247,8 @@
   "C_Cpp.inactiveRegionOpacity": 0.55,
   "editor.codeActionsOnSave": {},
   "files.associations": {
-    "*.hujson": "jsonc"
+    "*.hujson": "jsonc",
+    "shelldap": "perl"
   },
   "json.schemas": [
     {
@@ -258,5 +259,25 @@
         "allowTrailingCommas": true
       }
     }
-  ]
+  ],
+  "telemetry.telemetryLevel": "error",
+  "github.copilot.advanced": {},
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "chat.agent.enabled": true,
+  "rubyLsp.linters": null,
+  "docker.extension.dockerEngineAvailabilityPrompt": false,
+  "docker.extension.enableComposeLanguageServer": false,
+  "[go]": {
+    "editor.insertSpaces": false,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "go.alternateTools": {
+    "go": "~/.goenv/shims/"
+  },
+  "editor.semanticTokenColorCustomizations": {}
 }
