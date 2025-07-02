@@ -154,15 +154,6 @@ export GPG_TTY=$(tty)
 # PATH
 export PATH="$HOME/bin:$PATH"
 
-if [[ "$CODESPACES" != "true" ]]; then
-  # rbenv
-  export PATH="$HOME/.rbenv/shims:$PATH"
-  export PATH="$HOME/.rbenv/bin:$PATH"
-
-  # tfenv
-  export PATH="$HOME/.tfenv/bin:$PATH"
-fi
-
 # linux config
 if [[ $os == 'linux' && "$CODESPACES" != "true" ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
@@ -181,13 +172,18 @@ if [[ $os == 'mac' && "$CODESPACES" != "true" ]]; then
 fi
 
 if [[ "$CODESPACES" != "true" ]]; then
+  # rbenv
+  export PATH="$HOME/.rbenv/shims:$PATH"
+  export PATH="$HOME/.rbenv/bin:$PATH"
+
+  # tfenv
+  export PATH="$HOME/.tfenv/bin:$PATH"
+
   # goenv - needs to go towards the bottom as it modifies the PATH
-  # https://github.com/syndbg/goenv
+  # https://github.com/go-nv/goenv
   export GOENV_ROOT="$HOME/.goenv"
   export PATH="$GOENV_ROOT/bin:$PATH"
   eval "$(goenv init -)"
-  export PATH="$GOROOT/bin:$PATH" # must go after -> eval "$(goenv init -)"
-  export PATH="$PATH:$GOPATH/bin" # must go after -> eval "$(goenv init -)"
 
   # nodenv
   eval "$(nodenv init -)"
