@@ -22,3 +22,10 @@ alias ssh="TERM=xterm-256color $(which ssh)"
 if [[ "$OSTYPE" == "darwin"* ]]; then
     alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 fi
+
+# since goenv is super finicky about rehashing, we have to rehash it every time we want to open vscode
+# this is a workaround to ensure that the goenv rehash is run before opening vscode if it is installed
+# perhaps in the future it might be wise to do this with other <lang>envs as well
+# for the most part, other tools like pyenv, rbenv, etc. do not require this as they "JUST WORK"
+# but goenv is a special case, so we have to do this (yayyyy)
+alias code='(command -v goenv >/dev/null 2>&1 && goenv rehash); command code'
