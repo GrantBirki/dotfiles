@@ -154,6 +154,16 @@ export GPG_TTY=$(tty)
 # PATH
 export PATH="$HOME/bin:$PATH"
 
+# Default editor
+if [[ -z "$EDITOR" ]]; then
+  # if code is installed, use it as the default editor
+  if command -v code &> /dev/null; then
+    export EDITOR="code --wait"
+  else
+    export EDITOR="nano"
+  fi
+fi
+
 # linux config
 if [[ $os == 'linux' && "$CODESPACES" != "true" ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
