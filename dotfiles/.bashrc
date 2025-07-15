@@ -186,6 +186,8 @@ if [[ "$CODESPACES" != "true" ]]; then
   export GOENV_ROOT="$HOME/.goenv"
   export PATH="$GOENV_ROOT/bin:$PATH"
   eval "$(goenv init -)"
+  export GOPROXY="https://proxy.golang.org/,direct"
+  export GONOSUMDB="github.com/github/*"
 
   # nodenv
   eval "$(nodenv init -)"
