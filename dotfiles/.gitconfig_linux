@@ -3,7 +3,7 @@
 [core]
 	autocrlf = false
 [user]
-	email = grantbirki@github.com
+	email = grant.birkinbine@gmail.com
 	name = GrantBirki
 	signingkey = 49B739DDF82DE768A571C8AE9029BBCCC15C6F8C
 [gpg]
