@@ -67,7 +67,12 @@ while IFS= read -r line || [ -n "$line" ]; do
 	fi
 
 	if [ "$installed" = false ]; then
-		last_tried="${attempted_candidates[-1]}"
+		if [ "${#attempted_candidates[@]}" -gt 0 ]; then
+			last_index=$(( ${#attempted_candidates[@]} - 1 ))
+			last_tried="${attempted_candidates[$last_index]}"
+		else
+			last_tried="(none)"
+		fi
 		echo "Failed to install: $raw (last tried: $last_tried)"
 	fi
 
