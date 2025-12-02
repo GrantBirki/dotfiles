@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# Bulk-install VS Code extensions from a newline-separated list.
+# Usage:
+#   ./script/vsc-extension-bulk-install [path/to/extensions.txt]
+# If no path is provided it defaults to `../configs/vsc/mac/extensions.txt` (relative to this script).
+
+set -uo pipefail
+IFS=$'\n\t'
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_LIST="$DIR/../configs/vsc/mac/extensions.txt"
+EXT_FILE="${1:-$DEFAULT_LIST}"
+
+if ! command -v code >/dev/null 2>&1; then
+	echo "Error: 'code' CLI not found. Add it from VS Code: 'Shell Command: Install 'code' command in PATH'"
+	exit 1
+fi
+
+if [ ! -f "$EXT_FILE" ]; then
+	echo "Error: extensions file not found: $EXT_FILE"
+	exit 1
+fi
+
+echo "Installing extensions from: $EXT_FILE"
+
+while IFS= read -r line || [ -n "$line" ]; do
+	# trim
+	line="${line#${line%%[![:space:]]*}}"
+	line="${line%${line##*[![:space:]]}}"
+
+	[ -z "$line" ] && continue
+	case "$line" in
+		\#*) continue ;;
+	esac
+
+	raw="$line"
+	installed=false
+
+	candidate="$raw"
+	attempted_candidates=()
+	while true; do
+		attempted_candidates+=("$candidate")
+		echo "Attempting: $candidate"
+		if code --install-extension "$candidate" >/dev/null 2>&1; then
+			echo "Installed: $candidate"
+			installed=true
+			break
+		else
+			if [[ "$candidate" == *-* ]]; then
+				candidate="${candidate%-*}"
+			else
+				break
+			fi
+		fi
+	done
+
+	# If install command failed but extension is actually present, treat as success.
+	if [ "$installed" = false ]; then
+		for c in "${attempted_candidates[@]}"; do
+			if code --list-extensions 2>/dev/null | grep -Fxq "$c"; then
+				echo "Detected already installed: $c"
+				installed=true
+				break
+			fi
+		done
+	fi
+
+	if [ "$installed" = false ]; then
+		last_tried="${attempted_candidates[-1]}"
+		echo "Failed to install: $raw (last tried: $last_tried)"
+	fi
+
+done < "$EXT_FILE"
+
+echo "Done."
