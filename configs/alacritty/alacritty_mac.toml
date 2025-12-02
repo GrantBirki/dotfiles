@@ -2,10 +2,7 @@
 
 # Configuration for Alacritty, the GPU enhanced terminal emulator.
 
-live_config_reload = true
-working_directory = "/Users/birki/code" # you must use the full path here
-
-[shell]
+[terminal.shell]
 program = "/bin/bash"
 args = ["--login"]
 
@@ -84,6 +81,10 @@ lines = 35
 
 [font]
 size = 20
+
+[general]
+live_config_reload = true
+working_directory = "/Users/birki/code" # you must use the full path here
 
 [window.padding]
 x = 5
