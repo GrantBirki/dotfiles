@@ -208,8 +208,17 @@ if [[ "$CODESPACES" != "true" ]]; then
   eval "$(pyenv init -)"
 
   # cargo / rust
+
+  # Ensure the .cargo directory exists
+  mkdir -p "$HOME/.cargo"
+
+  # Ensure the env file exists (create empty if missing)
+  : > "$HOME/.cargo/env"
+
   export PATH="$HOME/.cargo/bin:$PATH"
-  . "$HOME/.cargo/env"
+
+  # Source the env file
+  [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
   # crystal
   if [[ $os == 'mac' ]]; then
