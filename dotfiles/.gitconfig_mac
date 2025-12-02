@@ -1,13 +1,15 @@
 # https://github.com/GrantBirki/dotfiles
 
+# This key is specific to my MacBook Air
+
 [core]
 	autocrlf = false
 [user]
 	email = grant.birkinbine@gmail.com
 	name = GrantBirki
-	signingkey = 65497A530F6F9405
+	signingkey = 9C0C622D9DEC4A08
 [gpg]
-	program = gpg
+	program = /opt/homebrew/bin/gpg
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [commit]
