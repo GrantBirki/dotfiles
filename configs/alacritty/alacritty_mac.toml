@@ -61,6 +61,28 @@ action = "CreateNewWindow"
 key = "N"
 mods = "Control"
 
+# Word jumping with Ctrl+Arrow (what you type)
+[[keyboard.bindings]]
+key = "Left"
+mods = "Control"
+chars = "\u001bb"
+
+[[keyboard.bindings]]
+key = "Right"
+mods = "Control"
+chars = "\u001bf"
+
+# Word jumping with Alt+Arrow (backup/alternative)
+[[keyboard.bindings]]
+key = "Left"
+mods = "Alt"
+chars = "\u001bb"
+
+[[keyboard.bindings]]
+key = "Right"
+mods = "Alt"
+chars = "\u001bf"
+
 [[mouse.bindings]]
 action = "PasteSelection"
 mouse = "Right"
