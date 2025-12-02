@@ -64,23 +64,9 @@
         "command": "-editor.action.selectAll"
     },
     {
-        "key": "ctrl+left",
-        "command": "cursorWordLeft",
-        "when": "textInputFocus"
-    },
-    {
-        "key": "alt+left",
-        "command": "-cursorWordLeft",
-        "when": "textInputFocus"
-    },
-    {
         "key": "ctrl+right",
         "command": "-quickInput.acceptInBackground",
         "when": "cursorAtEndOfQuickInputBox && inQuickInput && quickInputType == 'quickPick' || inQuickInput && !inputFocus && quickInputType == 'quickPick'"
-    },
-    {
-        "key": "ctrl+right",
-        "command": "cursorWordRight"
     },
     {
         "key": "ctrl+x",
