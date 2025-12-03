@@ -28,7 +28,64 @@ fi
 DOTFILES_REPO_DIR="dotfiles"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )" # dotfiles directory
 OLDDIR=~/dotfiles_old # old dotfiles backup directory
-FILES=".bash_aliases .bash_logout .bashrc .profile .rubocop.yml .irbrc" # list of files/folders to symlink in homedir
+OPENAI_MARKER="$HOME/.openai_laptop"
+OPENAI_LAPTOP=false
+
+if [ -f "$OPENAI_MARKER" ]; then
+    echo "OpenAI laptop detected (found $OPENAI_MARKER)"
+    OPENAI_LAPTOP=true
+fi
+
+if $OPENAI_LAPTOP; then
+    gitconfig=".gitconfig_openai"
+    BASHRC_SRC=".bashrc_openai"
+    BASH_ALIASES_SRC=".bash_aliases_openai"
+else
+    BASHRC_SRC=".bashrc"
+    BASH_ALIASES_SRC=".bash_aliases"
+fi
+
+FILES_TO_LINK=(
+    "$BASHRC_SRC:.bashrc"
+    "$BASH_ALIASES_SRC:.bash_aliases"
+    ".bash_logout:.bash_logout"
+    ".profile:.profile"
+    ".rubocop.yml:.rubocop.yml"
+    ".irbrc:.irbrc"
+)
+
+link_file() {
+    local source_file=$1
+    local target_name=$2
+    local source_path="$DIR/$DOTFILES_REPO_DIR/$source_file"
+    local target_path="$HOME/$target_name"
+    local backup_target="$OLDDIR/$target_name"
+
+    if [ ! -e "$source_path" ]; then
+        echo "Source $source_path does not exist, skipping."
+        return
+    fi
+
+    if [ -L "$target_path" ] && [ "$(readlink "$target_path")" == "$source_path" ]; then
+        echo "$target_path already linked to $source_file, skipping."
+        return
+    fi
+
+    if [ -e "$target_path" ] || [ -L "$target_path" ]; then
+        if [ "$target_path" -ef "$backup_target" ]; then
+            echo "$target_path already resides in backup, skipping move."
+        else
+            echo "Moving existing $target_path from ~/ to $OLDDIR"
+            mv "$target_path" "$OLDDIR/"
+        fi
+    else
+        echo "No existing $target_path found, creating fresh link."
+    fi
+
+    rm -f "$target_path"
+    echo "Creating symlink to $source_file at $target_path"
+    ln -s "$source_path" "$target_path"
+}
 
 ##########
 
@@ -36,22 +93,20 @@ FILES=".bash_aliases .bash_logout .bashrc .profile .rubocop.yml .irbrc" # list o
 echo -n "Creating $OLDDIR for backup of any existing dotfiles in ~/ ..."
 mkdir -p $OLDDIR
 
-# move any existing dotfiles in homedir to dotfiles_old directory, then create symlinks from the homedir to any files in the dotfiles directory specified in $FILES
-for file in $FILES; do
-    if [ -e ~/$file ]; then
-        echo "Moving any existing dotfiles from ~/ to $OLDDIR"
-        mv ~/$file ~/dotfiles_old/
-    else
-        echo "Warning: ~/$file does not exist, skipping move."
-    fi
-    echo "Creating symlink to $file in ~/"
-    ln -s $DIR/$DOTFILES_REPO_DIR/$file ~/$file
+# move any existing dotfiles in homedir to dotfiles_old directory, then create symlinks from the homedir to any files in the dotfiles directory specified in FILES_TO_LINK
+for mapping in "${FILES_TO_LINK[@]}"; do
+    IFS=":" read -r source_file target_name <<< "$mapping"
+    link_file "$source_file" "$target_name"
 done
 
 # if we are on a mac, symlink the .bashrc file to the .zshrc file
 if [[ $os == "mac" ]]; then
-    echo "Moving any existing .zshrc from ~/ to $OLDDIR"
-    mv ~/.zshrc ~/dotfiles_old/
+    if [ -e ~/.zshrc ] || [ -L ~/.zshrc ]; then
+        echo "Moving any existing .zshrc from ~/ to $OLDDIR"
+        mv ~/.zshrc ~/dotfiles_old/
+    else
+        echo "No existing .zshrc found, skipping move."
+    fi
     # echo "Creating symlink to .zshrc from .bashrc ~/"
     # ln -s $DIR/$DOTFILES_REPO_DIR/.bashrc ~/.zshrc
 
@@ -59,8 +114,11 @@ if [[ $os == "mac" ]]; then
     if [ -d ~/.config/karabiner ]; then
         echo "Moving any existing karabiner.json from ~/ to $OLDDIR/.config/karabiner"
         mkdir -p ~/dotfiles_old/.config/karabiner
-        mv ~/.config/karabiner/karabiner.json ~/dotfiles_old/.config/karabiner/
+        if [ -e ~/.config/karabiner/karabiner.json ] || [ -L ~/.config/karabiner/karabiner.json ]; then
+            mv ~/.config/karabiner/karabiner.json ~/dotfiles_old/.config/karabiner/
+        fi
         echo "Creating symlink to karabiner.json in ~/.config/karabiner"
+        rm -f ~/.config/karabiner/karabiner.json
         ln -s $DIR/configs/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
         echo "Note: select ANSI if prompted by Karabiner-Elements"
     else
@@ -71,8 +129,11 @@ if [[ $os == "mac" ]]; then
     if [ -d ~/.config/alacritty ]; then
         echo "Moving any existing alacritty config from ~/ to $OLDDIR/.config/alacritty"
         mkdir -p ~/dotfiles_old/.config/alacritty
-        mv ~/.config/alacritty/alacritty.toml ~/dotfiles_old/.config/alacritty/
+        if [ -e ~/.config/alacritty/alacritty.toml ] || [ -L ~/.config/alacritty/alacritty.toml ]; then
+            mv ~/.config/alacritty/alacritty.toml ~/dotfiles_old/.config/alacritty/
+        fi
         echo "Creating symlink to alacritty config in ~/.config/alacritty"
+        rm -f ~/.config/alacritty/alacritty.toml
         ln -s $DIR/configs/alacritty/alacritty_mac.toml ~/.config/alacritty/alacritty.toml
     else
         echo "No alacritty config found in ~/.config/alacritty - it will be skipped"
@@ -81,10 +142,17 @@ fi
 
 # custom .gitconfig logic
 if [[ "$CODESPACES" != "true" ]]; then
-    echo "Moving any existing .gitconfig from ~/ to $OLDDIR"
-    mv ~/.gitconfig ~/dotfiles_old/
-    echo "Creating symlink to $gitconfig in ~/"
-    ln -s $DIR/$DOTFILES_REPO_DIR/$gitconfig ~/.gitconfig
+    if [ -L ~/.gitconfig ] && [ "$(readlink ~/.gitconfig)" == "$DIR/$DOTFILES_REPO_DIR/$gitconfig" ]; then
+        echo "~/.gitconfig already linked to $gitconfig, skipping."
+    else
+        echo "Moving any existing .gitconfig from ~/ to $OLDDIR"
+        if [ -e ~/.gitconfig ] || [ -L ~/.gitconfig ]; then
+            mv ~/.gitconfig ~/dotfiles_old/
+        fi
+        echo "Creating symlink to $gitconfig in ~/"
+        rm -f ~/.gitconfig
+        ln -s $DIR/$DOTFILES_REPO_DIR/$gitconfig ~/.gitconfig
+    fi
 else
     # If we don't skip it, it almost always breaks commit signing / pushes
     echo "CODESPACES detected: skipping .gitconfig symlink."

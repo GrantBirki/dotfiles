@@ -1,0 +1,22 @@
+# https://github.com/GrantBirki/dotfiles
+
+# OpenAI work laptop gitconfig (signing handled by Secretive)
+
+[core]
+	autocrlf = false
+[user]
+	email = grant.birkinbine@gmail.com
+	name = GrantBirki
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[commit]
+	gpgSign = false
+[pull]
+	rebase = false
+[sequence]
+	editor = code --wait
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

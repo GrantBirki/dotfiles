@@ -23,6 +23,7 @@ fi
 
 OPENAI_MARKER="$HOME/.openai_laptop"
 OPENAI_NON_OPENAI_KEY_DEFAULT="${OPENAI_NON_OPENAI_KEY_DEFAULT:-/Users/birki/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/acf6b2512de58191c13bd9b82aa88451.pub}"
+OPENAI_WORK_KEY_DEFAULT="${OPENAI_WORK_KEY_DEFAULT:-/Users/birki/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/4f89cb94f1b4f8d173bdf80b8d050674.pub}"
 
 choose_non_openai_key() {
     local key_path
