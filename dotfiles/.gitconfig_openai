@@ -1,16 +1,19 @@
 # https://github.com/GrantBirki/dotfiles
 
-# OpenAI work laptop gitconfig (signing handled by Secretive)
+# OpenAI work laptop
 
 [core]
 	autocrlf = false
 [user]
-	email = grant.birkinbine@gmail.com
+	email = birki@openai.com
 	name = GrantBirki
+	signingkey = key::ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKoNl3eUUD2YQQm9XCezXs+G7sFw9oJskp4p8Naa+DJu6Jac5wG+kS3t3GLK6/T/fdI8uRdwST5J3m3mNHtOVrQ=
+[gpg]
+	format = ssh
+[commit]
+	gpgSign = true
 [url "git@github.com:"]
 	insteadOf = https://github.com/
-[commit]
-	gpgSign = false
 [pull]
 	rebase = false
 [sequence]
