@@ -173,6 +173,10 @@ fi
 if [[ $os == 'mac' && "$CODESPACES" != "true" ]]; then
   export BASH_SILENCE_DEPRECATION_WARNING=1
   eval "$(/opt/homebrew/bin/brew shellenv)"
+  if [ -n "${HOMEBREW_PREFIX:-}" ] && [ -d "$HOMEBREW_PREFIX/opt/rustup/bin" ]; then
+    # Prefer Homebrew's keg-only rustup bin.
+    export PATH="$HOMEBREW_PREFIX/opt/rustup/bin:$PATH"
+  fi
 
   # Bind Ctrl+Left Arrow to move backward by word
   bind '"\e[1;5D": backward-word'
@@ -209,16 +213,20 @@ if [[ "$CODESPACES" != "true" ]]; then
 
   # cargo / rust
 
-  # Ensure the .cargo directory exists
-  mkdir -p "$HOME/.cargo"
+  export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
+  export RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
 
-  # Ensure the env file exists (create empty if missing)
-  : > "$HOME/.cargo/env"
+  mkdir -p "$CARGO_HOME"
 
-  export PATH="$HOME/.cargo/bin:$PATH"
+  # Source rustup's env file when present.
+  if [ -f "$CARGO_HOME/env" ]; then
+    . "$CARGO_HOME/env"
+  fi
 
-  # Source the env file
-  [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+  case ":$PATH:" in
+    *":$CARGO_HOME/bin:"*) ;;
+    *) export PATH="$CARGO_HOME/bin:$PATH" ;;
+  esac
 
   # crystal
   if [[ $os == 'mac' ]]; then
