@@ -111,6 +111,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   if (( bash_major >= 4 )); then
     if [[ -r /opt/homebrew/etc/bash_completion ]]; then
       . /opt/homebrew/etc/bash_completion
+    elif [[ -d /opt/homebrew/etc/bash_completion.d ]]; then
+      for completion in /opt/homebrew/etc/bash_completion.d/*; do
+        [[ -r "$completion" ]] && . "$completion"
+      done
     fi
   elif [[ -d /opt/homebrew/etc/bash_completion.d ]]; then
     for completion in /opt/homebrew/etc/bash_completion.d/*; do
