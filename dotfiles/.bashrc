@@ -104,6 +104,18 @@ if ! shopt -oq posix; then
   fi
 fi
 
+
+# Homebrew bash completions (macOS)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if [[ -r /opt/homebrew/etc/bash_completion ]]; then
+    . /opt/homebrew/etc/bash_completion
+  elif [[ -d /opt/homebrew/etc/bash_completion.d ]]; then
+    for completion in /opt/homebrew/etc/bash_completion.d/*; do
+      [[ -r "$completion" ]] && . "$completion"
+    done
+  fi
+fi
+
 # Git branch coloring and PS1
 parse_git_branch() {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
