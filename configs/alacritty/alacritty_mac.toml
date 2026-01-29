@@ -3,7 +3,7 @@
 # Configuration for Alacritty, the GPU enhanced terminal emulator.
 
 [terminal.shell]
-program = "/bin/bash"
+program = "/opt/homebrew/bin/bash"
 args = ["--login"]
 
 [env]
