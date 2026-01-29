@@ -107,8 +107,11 @@ fi
 
 # Homebrew bash completions (macOS)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  if [[ -r /opt/homebrew/etc/bash_completion ]]; then
-    . /opt/homebrew/etc/bash_completion
+  bash_major=${BASH_VERSINFO[0]:-0}
+  if (( bash_major >= 4 )); then
+    if [[ -r /opt/homebrew/etc/bash_completion ]]; then
+      . /opt/homebrew/etc/bash_completion
+    fi
   elif [[ -d /opt/homebrew/etc/bash_completion.d ]]; then
     for completion in /opt/homebrew/etc/bash_completion.d/*; do
       [[ -r "$completion" ]] && . "$completion"
