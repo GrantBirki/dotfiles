@@ -16,6 +16,46 @@ alias pbpaste='xsel --clipboard --output'
 alias pss='ps -auxf | head -1 ; ps -auxf | grep -i'
 alias ssh="TERM=xterm-256color $(which ssh)"
 
+pg() {
+    local use_newest=0
+    if [ "$1" = "-n" ] || [ "$1" = "--newest" ]; then
+        use_newest=1
+        shift
+    fi
+
+    if [ -z "$1" ]; then
+        echo "Usage: pg [-n|--newest] <value>" >&2
+        return 2
+    fi
+
+    local query="$*"
+    if [ $use_newest -eq 1 ]; then
+        echo -e "\033[35m[pgrep ${query}] PID CMD_LINE (case-insensitive, newest only)\033[0m\n"
+    else
+        echo -e "\033[35m[pgrep ${query}] PID CMD_LINE (case-insensitive)\033[0m\n"
+    fi
+
+    local output
+    local flags=(-i -f -l -a)
+    if [ $use_newest -eq 1 ]; then
+        flags+=(-n)
+    fi
+    output=$(pgrep "${flags[@]}" -- "$query")
+    local status=$?
+
+    if [ $status -eq 0 ]; then
+        while IFS= read -r line; do
+            [ -n "$line" ] || continue
+            echo "$line"
+            echo
+        done <<< "$output"
+    elif [ $status -eq 1 ]; then
+        echo -e "\033[33m[pgrep ${query}] nothing found\033[0m"
+    fi
+
+    return $status
+}
+
 # if the platform is mac, use the mac aliases
 if [[ "$OSTYPE" == "darwin"* ]]; then
     alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
