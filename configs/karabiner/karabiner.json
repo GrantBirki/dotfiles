@@ -1725,34 +1725,6 @@
                         ]
                     },
                     {
-                        "description": "L (Win) [Sleep]",
-                        "manipulators": [
-                            {
-                                "from": {
-                                    "key_code": "l",
-                                    "modifiers": {
-                                        "mandatory": [
-                                            "command"
-                                        ],
-                                        "optional": [
-                                            "any"
-                                        ]
-                                    }
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "power",
-                                        "modifiers": [
-                                            "control",
-                                            "shift"
-                                        ]
-                                    }
-                                ],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
                         "description": "L (Alt+Ctrl) [Lock Screen]",
                         "manipulators": [
                             {
@@ -1774,35 +1746,6 @@
                                         "modifiers": [
                                             "control",
                                             "command"
-                                        ]
-                                    }
-                                ],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
-                        "description": "L (Alt+Ctrl) [Sleep]",
-                        "manipulators": [
-                            {
-                                "from": {
-                                    "key_code": "l",
-                                    "modifiers": {
-                                        "mandatory": [
-                                            "control",
-                                            "option"
-                                        ],
-                                        "optional": [
-                                            "any"
-                                        ]
-                                    }
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "power",
-                                        "modifiers": [
-                                            "control",
-                                            "shift"
                                         ]
                                     }
                                 ],
@@ -3202,6 +3145,14 @@
                         "is_pointing_device": true,
                         "product_id": 4641,
                         "vendor_id": 17498
+                    },
+                    "ignore": false
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 22019,
+                        "vendor_id": 28533
                     },
                     "ignore": false
                 }
