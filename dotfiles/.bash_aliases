@@ -12,13 +12,11 @@
 #   The `aliases` command warns when tracked commands are missing metadata.
 
 alias ls='eza --group-directories-first --color=auto'
-alias ll='ls -lah --time-style="+%Y-%m-%d %H:%M:%S" --total-size --octal-permissions --no-permissions'
-alias la='ls -A'
+alias ll='ls -lahg --time-style="+%Y-%m-%d %H:%M:%S" --total-size --octal-permissions --no-permissions'
 alias l='ls'
 alias c='clear'
 alias celar='clear'
 alias cdc='cd ~/code'
-alias lss='eza -lag --time-style=long-iso'
 alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 
 # User-facing bash functions that should always exist in .aliases.yml.
