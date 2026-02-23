@@ -12,13 +12,12 @@
 #   The `aliases` command warns when tracked commands are missing metadata.
 
 alias ls='eza --group-directories-first --color=auto'
-alias ll='ls -lah'
+alias ll='ls -lah --time-style="+%Y-%m-%d %H:%M:%S" --total-size --octal-permissions --no-permissions'
 alias la='ls -A'
-alias l='ls -CF'
+alias l='ls'
 alias c='clear'
-alias cdc='cd ~/code || cd /mnt/c/code'
+alias cdc='cd ~/code'
 alias gbr='git branch | grep -v -E "(master|main)" | xargs git branch -D'
-alias gpf='git fetch --all && echo -e "\033[1;34m[#]\033[0m Creating Backup Branch: backup-$(git symbolic-ref --short -q HEAD)" && git branch backup-$(git symbolic-ref --short -q HEAD) && echo -e "\033[1;34m[#]\033[0m Force Pull Current Branch from Remote Origin" && git reset --hard origin/$(git symbolic-ref --short -q HEAD) && echo -e "\033[1;34m[#]\033[0m Current Branch is set to state of remote Origin and backup branch created."'
 alias gcm='git checkout master 2> /dev/null || echo "master branch not found, trying main"; git checkout main'
 alias lss='eza -lag --time-style=long-iso'
 alias h='history | rg -i'
