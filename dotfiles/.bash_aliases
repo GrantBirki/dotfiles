@@ -17,18 +17,148 @@ alias la='ls -A'
 alias l='ls'
 alias c='clear'
 alias cdc='cd ~/code'
-alias gbr='git branch | grep -v -E "(master|main)" | xargs git branch -D'
-alias gcm='git checkout master 2> /dev/null || echo "master branch not found, trying main"; git checkout main'
 alias lss='eza -lag --time-style=long-iso'
-alias h='history | rg -i'
-alias dockernuke='docker rm -vf $(docker ps -a -q) && docker rmi -f $(docker images -a -q) && docker system prune -a --volumes'
-alias pbcopy='xsel --clipboard --input'
-alias pbpaste='xsel --clipboard --output'
 alias pss='ps -auxf | head -1 ; ps -auxf | grep -i'
-alias ssh="TERM=xterm-256color $(which ssh)"
+alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 
 # User-facing bash functions that should always exist in .aliases.yml.
-ALIASES_TRACKED_FUNCTIONS=(pg gclone gpull_fn aliases_help aliases)
+ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh gclone gpull_fn aliases_help aliases)
+
+h() {
+    if [ "$#" -eq 0 ]; then
+        history
+        return $?
+    fi
+
+    history | rg -i -- "$*"
+}
+
+gbr() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "gbr must be run inside a git repository." >&2
+        return 1
+    fi
+
+    local current_branch=""
+    local default_branch=""
+    local remote_head=""
+    local branch
+    local branches_to_delete=()
+
+    current_branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+    remote_head=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)
+    if [ -n "$remote_head" ]; then
+        default_branch="${remote_head#origin/}"
+    fi
+
+    while IFS= read -r branch; do
+        [ -n "$branch" ] || continue
+        case "$branch" in
+            main|master)
+                continue
+                ;;
+        esac
+
+        if [ -n "$default_branch" ] && [ "$branch" = "$default_branch" ]; then
+            continue
+        fi
+
+        if [ -n "$current_branch" ] && [ "$branch" = "$current_branch" ]; then
+            continue
+        fi
+
+        branches_to_delete+=("$branch")
+    done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+
+    if [ "${#branches_to_delete[@]}" -eq 0 ]; then
+        echo "No local branches to delete."
+        return 0
+    fi
+
+    echo "Deleting local branches:"
+    printf "  %s\n" "${branches_to_delete[@]}"
+    git branch -D "${branches_to_delete[@]}"
+}
+
+gcm() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "gcm must be run inside a git repository." >&2
+        return 1
+    fi
+
+    local default_branch=""
+    local remote_head=""
+    remote_head=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)
+    if [ -n "$remote_head" ]; then
+        default_branch="${remote_head#origin/}"
+    fi
+
+    if [ -z "$default_branch" ]; then
+        if git show-ref --verify --quiet refs/heads/main || git show-ref --verify --quiet refs/remotes/origin/main; then
+            default_branch="main"
+        elif git show-ref --verify --quiet refs/heads/master || git show-ref --verify --quiet refs/remotes/origin/master; then
+            default_branch="master"
+        fi
+    fi
+
+    if [ -z "$default_branch" ]; then
+        echo "Could not determine default branch (tried origin/HEAD, main, master)." >&2
+        return 1
+    fi
+
+    if [ "$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" = "$default_branch" ]; then
+        echo "Already on $default_branch."
+        return 0
+    fi
+
+    if git show-ref --verify --quiet "refs/heads/$default_branch"; then
+        git switch "$default_branch" 2>/dev/null || git checkout "$default_branch"
+        return $?
+    fi
+
+    if git show-ref --verify --quiet "refs/remotes/origin/$default_branch"; then
+        if git switch --track -c "$default_branch" "origin/$default_branch" 2>/dev/null; then
+            return 0
+        fi
+        git checkout -b "$default_branch" --track "origin/$default_branch"
+        return $?
+    fi
+
+    echo "Branch $default_branch not found locally or on origin." >&2
+    return 1
+}
+
+dockernuke() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "docker command not found." >&2
+        return 127
+    fi
+
+    local status=0
+    local container_ids
+    local image_ids
+
+    container_ids=$(docker ps -a -q)
+    if [ -n "$container_ids" ]; then
+        docker rm -vf $container_ids || status=$?
+    else
+        echo "No Docker containers to remove."
+    fi
+
+    image_ids=$(docker images -a -q)
+    if [ -n "$image_ids" ]; then
+        docker rmi -f $image_ids || status=$?
+    else
+        echo "No Docker images to remove."
+    fi
+
+    docker system prune -a --volumes || status=$?
+    return $status
+}
+
+ssh() {
+    TERM=xterm-256color command ssh "$@"
+}
 
 pg() {
     local use_newest=0
@@ -69,11 +199,6 @@ pg() {
 
     return $status
 }
-
-# if the platform is mac, use the mac aliases
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
-fi
 
 OPENAI_MARKER="$HOME/.openai_laptop"
 OPENAI_NON_OPENAI_KEY_DEFAULT="${OPENAI_NON_OPENAI_KEY_DEFAULT:-/Users/birki/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/PublicKeys/acf6b2512de58191c13bd9b82aa88451.pub}"
