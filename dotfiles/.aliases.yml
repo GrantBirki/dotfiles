@@ -1,4 +1,7 @@
 aliases:
+  - name: "ls"
+    args: "[path]"
+    description: "Pretty directory listing via eza with colors, icons, and directories-first sorting."
   - name: "ll"
     args: "[path]"
     description: "List files in long format, include dotfiles, and show human-readable sizes."
@@ -25,7 +28,7 @@ aliases:
     description: "Checkout master if present, otherwise checkout main."
   - name: "lss"
     args: "[path]"
-    description: "Detailed exa listing with long ISO timestamps."
+    description: "Detailed eza listing with long ISO timestamps."
   - name: "h"
     args: "<pattern>"
     description: "Case-insensitive search through shell history."

@@ -87,6 +87,22 @@ link_file() {
     ln -s "$source_path" "$target_path"
 }
 
+file_sha256() {
+    local file_path=$1
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$file_path" | awk '{print $1}'
+        return 0
+    fi
+
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$file_path" | awk '{print $1}'
+        return 0
+    fi
+
+    return 1
+}
+
 ##########
 
 # create dotfiles_old in homedir
@@ -110,19 +126,58 @@ if [[ $os == "mac" ]]; then
     # echo "Creating symlink to .zshrc from .bashrc ~/"
     # ln -s $DIR/$DOTFILES_REPO_DIR/.bashrc ~/.zshrc
 
-    # move karabiner.json to the correct location if the .config/karabiner directory exists
+    # move/symlink karabiner.json only when the repo source changes
     if [ -d ~/.config/karabiner ]; then
-        echo "Moving any existing karabiner.json from ~/ to $OLDDIR/.config/karabiner"
-        mkdir -p ~/dotfiles_old/.config/karabiner
-        if [ -e ~/.config/karabiner/karabiner.json ] || [ -L ~/.config/karabiner/karabiner.json ]; then
-            mv ~/.config/karabiner/karabiner.json ~/dotfiles_old/.config/karabiner/
+        karabiner_source="$DIR/configs/karabiner/karabiner.json"
+        karabiner_target="$HOME/.config/karabiner/karabiner.json"
+        karabiner_backup_dir="$OLDDIR/.config/karabiner"
+        karabiner_state_file="$HOME/.config/karabiner/.dotfiles_karabiner_source_sha256"
+        source_checksum=""
+        last_applied_checksum=""
+        needs_karabiner_update=0
+
+        if [ -e "$karabiner_source" ]; then
+            source_checksum=$(file_sha256 "$karabiner_source" 2>/dev/null || true)
         fi
-        echo "Creating symlink to karabiner.json in ~/.config/karabiner"
-        rm -f ~/.config/karabiner/karabiner.json
-        ln -s $DIR/configs/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
-        echo "Note: select ANSI if prompted by Karabiner-Elements"
+
+        if [ -f "$karabiner_state_file" ]; then
+            last_applied_checksum=$(head -n 1 "$karabiner_state_file" 2>/dev/null)
+        fi
+
+        if [ -L "$karabiner_target" ] && [ "$(readlink "$karabiner_target")" == "$karabiner_source" ]; then
+            echo "karabiner.json already linked to repo config, skipping."
+            if [ -n "$source_checksum" ]; then
+                printf "%s\n" "$source_checksum" > "$karabiner_state_file"
+            fi
+        else
+            if [ ! -e "$karabiner_target" ] && [ ! -L "$karabiner_target" ]; then
+                needs_karabiner_update=1
+            elif [ -z "$source_checksum" ]; then
+                echo "Could not calculate karabiner source checksum; leaving existing file unchanged."
+            elif [ -z "$last_applied_checksum" ] || [ "$source_checksum" != "$last_applied_checksum" ]; then
+                needs_karabiner_update=1
+            fi
+
+            if [ "$needs_karabiner_update" -eq 0 ]; then
+                echo "karabiner source unchanged since last install, skipping move/symlink."
+            else
+                echo "Updating karabiner.json in ~/.config/karabiner"
+                mkdir -p "$karabiner_backup_dir"
+                if [ -e "$karabiner_target" ] || [ -L "$karabiner_target" ]; then
+                    echo "Moving existing karabiner.json to $karabiner_backup_dir"
+                    mv "$karabiner_target" "$karabiner_backup_dir/"
+                fi
+                echo "Creating symlink to karabiner.json in ~/.config/karabiner"
+                rm -f "$karabiner_target"
+                ln -s "$karabiner_source" "$karabiner_target"
+                if [ -n "$source_checksum" ]; then
+                    printf "%s\n" "$source_checksum" > "$karabiner_state_file"
+                fi
+                echo "Note: select ANSI if prompted by Karabiner-Elements"
+            fi
+        fi
     else
-        echo "No karabiner.json found in ~/.config/karabiner - it will be skipped"
+        echo "No ~/.config/karabiner directory found - karabiner.json will be skipped"
     fi
 
     # move configs/alacritty/alacritty_mac.toml to the correct location if the .config/alacritty directory exists
