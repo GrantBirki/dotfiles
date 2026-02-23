@@ -12,16 +12,23 @@
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
     if [ -f "$HOME/.bashrc" ]; then
-	. "$HOME/.bashrc"
+        . "$HOME/.bashrc"
     fi
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
-fi
+profile_path_prepend() {
+    if [ -d "$1" ]; then
+        case ":$PATH:" in
+            *":$1:"*) ;;
+            *) PATH="$1:$PATH" ;;
+        esac
+    fi
+}
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
-fi
+profile_path_prepend "$HOME/bin"
+
+# set PATH so it includes user's private bin if it exists
+profile_path_prepend "$HOME/.local/bin"
+
+export PATH

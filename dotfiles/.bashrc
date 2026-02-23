@@ -8,6 +8,15 @@ case $- in
     *) return;;
 esac
 
+path_prepend() {
+  local dir="$1"
+  [ -d "$dir" ] || return 0
+  case ":$PATH:" in
+    *":$dir:"*) ;;
+    *) PATH="$dir:$PATH" ;;
+  esac
+}
+
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 HISTCONTROL=ignoredups:erasedups  # no duplicate entries
 HISTSIZE=100000                   # big big history
@@ -25,49 +34,8 @@ shopt -s checkwinsize
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-  debian_chroot=$(cat /etc/debian_chroot)
-fi
-
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-  xterm-color|*-256color) color_prompt=yes;;
-esac
-
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
-#force_color_prompt=yes
-if [ -n "$force_color_prompt" ]; then
-  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-    # We have color support; assume it's compliant with Ecma-48
-    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-    # a case would tend to support setf rather than setaf.)
-    color_prompt=yes
-  else
-    color_prompt=
-  fi
-fi
-
-if [ "$color_prompt" = yes ]; then
-  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
-else
-  PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\n\$ '
-fi
-unset color_prompt force_color_prompt
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-  xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-  *)
-    ;;
-esac
-
-# enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
+# Linux-only color aliases from default distro templates.
+if [[ "$OSTYPE" != "darwin"* ]] && [ -x /usr/bin/dircolors ]; then
   test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
   alias ls='ls --color=auto'
   #alias dir='dir --color=auto'
@@ -81,9 +49,11 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+# Add an "alert" alias for long running commands when notify-send exists.
+# Use like so: sleep 10; alert
+if command -v notify-send >/dev/null 2>&1; then
+  alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+fi
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -159,11 +129,11 @@ if [[ "$CODESPACES" != "true" ]]; then
   }
   if [ -f "${SSH_ENV}" ]; then
     . "${SSH_ENV}" > /dev/null
-    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-      start_agent;
-    }
+    if [ -z "${SSH_AGENT_PID:-}" ] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
+      start_agent
+    fi
   else
-    start_agent;
+    start_agent
   fi
 fi
 
@@ -171,7 +141,7 @@ fi
 export GPG_TTY=$(tty)
 
 # PATH
-export PATH="$HOME/bin:$PATH"
+path_prepend "$HOME/bin"
 
 # Default editor
 if [[ -z "$EDITOR" ]]; then
@@ -185,16 +155,20 @@ fi
 
 # linux config
 if [[ $os == 'linux' && "$CODESPACES" != "true" ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  fi
 fi
 
 # macos config
 if [[ $os == 'mac' && "$CODESPACES" != "true" ]]; then
   export BASH_SILENCE_DEPRECATION_WARNING=1
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+  if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  fi
   if [ -n "${HOMEBREW_PREFIX:-}" ] && [ -d "$HOMEBREW_PREFIX/opt/rustup/bin" ]; then
     # Prefer Homebrew's keg-only rustup bin.
-    export PATH="$HOMEBREW_PREFIX/opt/rustup/bin:$PATH"
+    path_prepend "$HOMEBREW_PREFIX/opt/rustup/bin"
   fi
 
   # Bind Ctrl+Left Arrow to move backward by word
@@ -206,29 +180,35 @@ fi
 
 if [[ "$CODESPACES" != "true" ]]; then
   # rbenv
-  export PATH="$HOME/.rbenv/shims:$PATH"
-  export PATH="$HOME/.rbenv/bin:$PATH"
+  path_prepend "$HOME/.rbenv/shims"
+  path_prepend "$HOME/.rbenv/bin"
 
   # tfenv
-  export PATH="$HOME/.tfenv/bin:$PATH"
+  path_prepend "$HOME/.tfenv/bin"
 
   # goenv - needs to go towards the bottom as it modifies the PATH
   # https://github.com/go-nv/goenv
   # for usage in visual studio code: https://github.com/go-nv/goenv/issues/293#issuecomment-2248260404
   # running `$ goenv rehash` often and fully rebooting vscode is a must
   export GOENV_ROOT="$HOME/.goenv"
-  export PATH="$GOENV_ROOT/bin:$PATH"
-  eval "$(goenv init -)"
+  path_prepend "$GOENV_ROOT/bin"
+  if command -v goenv >/dev/null 2>&1; then
+    eval "$(goenv init -)"
+  fi
   export GOPROXY="https://proxy.golang.org/,direct"
   export GONOSUMDB="github.com/github/*"
 
   # nodenv
-  eval "$(nodenv init -)"
+  if command -v nodenv >/dev/null 2>&1; then
+    eval "$(nodenv init -)"
+  fi
 
   # pyenv
   export PYENV_ROOT="$HOME/.pyenv"
-  export PATH="$PYENV_ROOT/bin:$PATH"
-  eval "$(pyenv init -)"
+  path_prepend "$PYENV_ROOT/bin"
+  if command -v pyenv >/dev/null 2>&1; then
+    eval "$(pyenv init -)"
+  fi
 
   # cargo / rust
 
@@ -244,7 +224,7 @@ if [[ "$CODESPACES" != "true" ]]; then
 
   case ":$PATH:" in
     *":$CARGO_HOME/bin:"*) ;;
-    *) export PATH="$CARGO_HOME/bin:$PATH" ;;
+    *) path_prepend "$CARGO_HOME/bin" ;;
   esac
 
   # crystal
@@ -253,12 +233,16 @@ if [[ "$CODESPACES" != "true" ]]; then
   else
     # I don't use crenv on macos, so only run this on linux
     # crenv on macos lacks support, especially for arm64
-    export PATH="$HOME/.crenv/bin:$PATH"
-    eval "$(crenv init -)"
+    path_prepend "$HOME/.crenv/bin"
+    if command -v crenv >/dev/null 2>&1; then
+      eval "$(crenv init -)"
+    fi
     export CRENV_ROOT="$HOME/.crenv"
   fi
   # https://github.com/GrantBirki/crystal-base-template/pull/11/commits/4481750a1dae141832f76ad0d79137cdb385852e
-  export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
+  if command -v crystal >/dev/null 2>&1; then
+    export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
+  fi
 fi
 
 # if the ~/.local/bin/ directory doesn't exist, create it
@@ -268,4 +252,4 @@ if [ ! -d "$HOME/.local/bin" ]; then
 fi
 
 # add ~/.local/bin/ to the PATH as it is where my custom binaries are stored
-export PATH="$HOME/.local/bin:$PATH"
+path_prepend "$HOME/.local/bin"
