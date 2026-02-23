@@ -16,6 +16,7 @@ alias ll='ls -lah --time-style="+%Y-%m-%d %H:%M:%S" --total-size --octal-permiss
 alias la='ls -A'
 alias l='ls'
 alias c='clear'
+alias celar='clear'
 alias cdc='cd ~/code'
 alias lss='eza -lag --time-style=long-iso'
 alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
