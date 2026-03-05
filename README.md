@@ -14,7 +14,7 @@ These files have been tested to work on the following operating systems:
 - Linux
 - MacOS
 
-> Note: All terminal dotfiles are for `bash`
+> Note: All terminal dotfiles are for `bash`.
 
 ## Setup ⚙️
 
