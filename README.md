@@ -7,7 +7,7 @@
 
 ## About 💡
 
-This repository is a personal collection of my dotfiles for work and fun.
+This repository is a personal collection of my dotfiles for work and fun
 
 These files have been tested to work on the following operating systems:
 
