@@ -18,9 +18,10 @@ alias c='clear'
 alias celar='clear'
 alias cdc='cd ~/code'
 alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+alias ss='set_secret'
 
 # User-facing bash functions that should always exist in .aliases.yml.
-ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh gclone gpull_fn aliases_help aliases)
+ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh set_secret gclone gpull_fn aliases_help aliases)
 
 h() {
     if [ "$#" -eq 0 ]; then
@@ -29,6 +30,31 @@ h() {
     fi
 
     history | rg -i -- "$*"
+}
+
+set_secret() {
+    local var_name="${1:-}"
+    local secret_value=""
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: set_secret VAR_NAME" >&2
+        return 2
+    fi
+
+    if [[ ! "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        echo "set_secret requires a valid shell variable name." >&2
+        return 2
+    fi
+
+    if ! read -rs -p "${var_name}=" secret_value; then
+        echo >&2
+        return 1
+    fi
+    echo
+
+    printf -v "$var_name" '%s' "$secret_value"
+    export "$var_name"
+    unset secret_value
 }
 
 gbr() {

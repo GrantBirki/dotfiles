@@ -9,7 +9,7 @@ case $- in
 esac
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTCONTROL=ignoredups:erasedups  # no duplicate entries
+HISTCONTROL=ignorespace:ignoredups:erasedups  # skip leading-space entries and dedupe
 HISTSIZE=100000                   # big big history
 HISTFILESIZE=100000               # big big history
 shopt -s histappend               # append to history, don't overwrite it
@@ -115,4 +115,3 @@ bind TAB:menu-complete
 
 # PATH
 export PATH="$HOME/bin:$PATH"
-

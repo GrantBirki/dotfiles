@@ -17,6 +17,32 @@ alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
 alias pss='ps -auxf | head -1 ; ps -auxf | grep -i'
 alias ssh="TERM=xterm-256color $(which ssh)"
+alias ss='set_secret'
+
+set_secret() {
+    local var_name="${1:-}"
+    local secret_value=""
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: set_secret VAR_NAME" >&2
+        return 2
+    fi
+
+    if [[ ! "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        echo "set_secret requires a valid shell variable name." >&2
+        return 2
+    fi
+
+    if ! read -rs -p "${var_name}=" secret_value; then
+        echo >&2
+        return 1
+    fi
+    echo
+
+    printf -v "$var_name" '%s' "$secret_value"
+    export "$var_name"
+    unset secret_value
+}
 
 gcm() {
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
