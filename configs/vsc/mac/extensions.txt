@@ -1,57 +1,30 @@
-# This file is simply a list of all the extensions that I have installed in VSCode
-# Extensions can be listed with `ls ~/.vscode/extensions`
-# According to Stackoverflow, extensions can be installed via `code --install-extension <name>`
-# https://stackoverflow.com/a/51403163/4123012
+# This file is a list of VS Code extensions installed on macOS.
+# Refresh it with `code --list-extensions --show-versions`.
+# Install entries with `code --install-extension <publisher.extension@version>`.
 
-akamud.vscode-theme-onedark-2.3.0
-astro-build.astro-vscode-2.15.4
-bierner.emojisense-0.10.0
-bierner.markdown-mermaid-1.29.0
-bpruitt-goddard.mermaid-markdown-syntax-highlighting-1.7.4
-bradlc.vscode-tailwindcss-0.14.29
-castwide.solargraph-0.25.0
-codezombiech.gitignore-0.10.0
-crystal-lang-tools.crystal-lang-0.9.8
-csstools.postcss-1.0.9
-dakshmiglani.hex-to-rgba-1.0.0
-davidanson.vscode-markdownlint-0.60.0
-dbaeumer.vscode-eslint-3.0.16
-donjayamanne.githistory-0.6.20
-ecmel.vscode-html-css-2.0.13
-esbenp.prettier-vscode-11.0.1
-github.copilot-1.388.0
-github.copilot-chat-0.33.3
-github.vscode-github-actions-0.28.1
-github.vscode-pull-request-github-0.122.1
-golang.go-0.50.0
-hashicorp.terraform-2.37.6
-kaiwood.endwise-1.5.1
-mechatroner.rainbow-csv-3.23.0
-mikestead.dotenv-1.0.1
-misogi.ruby-rubocop-0.8.6
-mohsen1.prettify-json-0.0.3
-ms-azuretools.vscode-containers-2.3.0
-ms-azuretools.vscode-docker-2.0.0
-ms-python.debugpy-2025.16.0
-ms-python.python-2025.18.0
-ms-python.vscode-pylance-2025.10.3
-ms-python.vscode-python-envs-1.12.0
-ms-vscode-remote.remote-containers-0.431.1
-ms-vscode.cpptools-1.28.3
-ms-vscode.powershell-2025.4.0
-ms-vscode.vscode-typescript-next-6.0.20251201
-pkief.material-icon-theme-5.29.0
-redhat.vscode-xml-0.29.0
-redhat.vscode-yaml-1.19.1
-rust-lang.rust-analyzer-0.3.2702
-shopify.ruby-extensions-pack-0.1.13
-shopify.ruby-lsp-0.9.32
-sorbet.sorbet-vscode-extension-0.3.46
-tamasfe.even-better-toml-0.21.2
-techer.open-in-browser-2.0.0
-unifiedjs.vscode-mdx-1.8.17
-veelenga.crystal-ameba-0.3.1
-yzhang.markdown-all-in-one-3.6.3
-zamerick.vscode-caddyfile-syntax-1.0.4
-zhuangtongfa.material-theme-3.19.0
-zxh404.vscode-proto3-0.5.5
+bierner.emojisense@0.10.0
+bradlc.vscode-tailwindcss@0.14.29
+codezombiech.gitignore@0.10.0
+dakshmiglani.hex-to-rgba@1.0.0
+davidanson.vscode-markdownlint@0.61.2
+donjayamanne.githistory@0.6.20
+github.vscode-github-actions@0.31.5
+github.vscode-pull-request-github@0.144.0
+golang.go@0.52.2
+hashicorp.terraform@2.39.2
+mechatroner.rainbow-csv@3.24.1
+mohsen1.prettify-json@0.0.3
+ms-python.debugpy@2026.6.0
+ms-python.python@2026.4.0
+ms-python.vscode-pylance@2026.2.1
+ms-python.vscode-python-envs@1.30.0
+ms-vscode.vscode-typescript-next@6.0.20260416
+openai.chatgpt@26.506.31421
+pkief.material-icon-theme@5.34.0
+redhat.vscode-xml@0.29.2
+redhat.vscode-yaml@1.23.0
+rust-lang.rust-analyzer@0.3.2896
+shopify.ruby-extensions-pack@0.1.14
+shopify.ruby-lsp@0.10.3
+unifiedjs.vscode-mdx@1.8.17
+yzhang.markdown-all-in-one@3.6.3

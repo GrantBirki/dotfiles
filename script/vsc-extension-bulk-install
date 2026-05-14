@@ -47,7 +47,9 @@ while IFS= read -r line || [ -n "$line" ]; do
 			installed=true
 			break
 		else
-			if [[ "$candidate" == *-* ]]; then
+			if [[ "$candidate" == *@* ]]; then
+				candidate="${candidate%@*}"
+			elif [[ "$candidate" == *-* ]]; then
 				candidate="${candidate%-*}"
 			else
 				break
@@ -58,7 +60,12 @@ while IFS= read -r line || [ -n "$line" ]; do
 	# If install command failed but extension is actually present, treat as success.
 	if [ "$installed" = false ]; then
 		for c in "${attempted_candidates[@]}"; do
-			if code --list-extensions 2>/dev/null | grep -Fxq "$c"; then
+			if [[ "$c" == *@* ]]; then
+				list_args=(--list-extensions --show-versions)
+			else
+				list_args=(--list-extensions)
+			fi
+			if code "${list_args[@]}" 2>/dev/null | grep -Fxq "$c"; then
 				echo "Detected already installed: $c"
 				installed=true
 				break
