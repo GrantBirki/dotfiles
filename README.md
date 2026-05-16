@@ -16,8 +16,13 @@ Alacritty, Karabiner-Elements, and VS Code configuration for my local Mac setup.
 5. Run `source ~/.bashrc` in existing shells, or open a new terminal.
 
 `script/install` reads `install.yml`, creates symlinks for managed files, moves
-replaced targets into `~/dotfiles_old`, and writes install state to
-`.dotfiles/state/` inside the repo. The state directory is ignored by git.
+replaced targets into `~/dotfiles_old`, installs the pinned VS Code extension
+list, and writes install state to `.dotfiles/state/` inside the repo. The state
+directory is ignored by git.
+
+VS Code settings and keybindings are symlinked into
+`~/Library/Application Support/Code/User`, so edits made through VS Code update
+the files tracked in `configs/vsc/`.
 
 If a managed file needs to be restored from the latest install state, run
 `script/restore`. Use `script/restore --dry-run` to preview restore actions, or
@@ -26,7 +31,7 @@ If a managed file needs to be restored from the latest install state, run
 ## Scripts
 
 - `script/bootstrap`: install Ruby helpers from the committed Bundler config and vendored cache.
-- `script/install`: symlink the manifest-managed macOS dotfiles/configs into place.
+- `script/install`: symlink the manifest-managed macOS dotfiles/configs into place and install pinned VS Code extensions.
 - `script/restore`: restore managed paths from a prior install state file.
 - `script/doctor`: check local prerequisites, manifest validity, symlink health, and install state.
 - `script/test`: run syntax, config, alias metadata, and cleanup checks.

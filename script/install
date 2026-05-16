@@ -7,10 +7,11 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 source "$DIR/script/env" "$@"
 
 dry_run=0
+install_vscode_extensions=1
 
 usage() {
     cat <<'USAGE'
-Usage: script/install [--dry-run]
+Usage: script/install [--dry-run] [--skip-vscode-extensions]
 
 Install managed dotfiles from install.yml.
 USAGE
@@ -57,6 +58,9 @@ for arg in "$@"; do
     case "$arg" in
         --dry-run|-n)
             dry_run=1
+            ;;
+        --skip-vscode-extensions)
+            install_vscode_extensions=0
             ;;
         --help|-h)
             usage
@@ -149,6 +153,16 @@ if [ "$dry_run" -eq 0 ]; then
     mv "$state_tmp" "$state_file"
     trap - EXIT
     echo "Install state written to $state_file"
+fi
+
+if [ "$install_vscode_extensions" -eq 1 ]; then
+    if [ "$dry_run" -eq 1 ]; then
+        "$DIR/script/vsc-extension-bulk-install" --dry-run
+    else
+        "$DIR/script/vsc-extension-bulk-install"
+    fi
+else
+    echo "Skipping VS Code extension install."
 fi
 
 echo "Make sure to run 'source ~/.bashrc' to finish applying shell changes."

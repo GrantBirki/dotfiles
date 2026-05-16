@@ -1,33 +1,98 @@
 #!/usr/bin/env bash
 
-# Bulk-install VS Code extensions from a newline-separated list.
+# Bulk-install exact VS Code extension pins from a newline-separated list.
 # Usage:
-#   ./script/vsc-extension-bulk-install [path/to/extensions.txt]
+#   ./script/vsc-extension-bulk-install [--dry-run] [path/to/extensions.txt]
 # If no path is provided it defaults to `../configs/vsc/extensions.txt` (relative to this script).
 
-set -uo pipefail
+set -euo pipefail
 IFS=$'\n\t'
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_LIST="$DIR/../configs/vsc/extensions.txt"
-EXT_FILE="${1:-$DEFAULT_LIST}"
+EXT_FILE="$DEFAULT_LIST"
+dry_run=0
 
-if ! command -v code >/dev/null 2>&1; then
-	echo "Error: 'code' CLI not found. Add it from VS Code: 'Shell Command: Install 'code' command in PATH'"
-	exit 1
-fi
+usage() {
+	cat <<'USAGE'
+Usage: script/vsc-extension-bulk-install [--dry-run] [path/to/extensions.txt]
+
+Install the exact VS Code extension versions tracked in configs/vsc/extensions.txt.
+USAGE
+}
+
+trim() {
+	local value=$1
+	value="${value#${value%%[![:space:]]*}}"
+	value="${value%${value##*[![:space:]]}}"
+	printf "%s" "$value"
+}
+
+extension_id() {
+	local spec=$1
+	printf "%s" "${spec%@*}"
+}
+
+is_pinned_spec() {
+	local spec=$1
+	[[ "$spec" == *@* ]]
+}
+
+installed_exact_spec() {
+	local spec=$1
+	code --list-extensions --show-versions 2>/dev/null | grep -Fxq "$spec"
+}
+
+installed_extension_id() {
+	local id=$1
+	code --list-extensions 2>/dev/null | grep -Fxq "$id"
+}
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--dry-run|-n)
+			dry_run=1
+			shift
+			;;
+		--help|-h)
+			usage
+			exit 0
+			;;
+		-*)
+			echo "Unknown option: $1" >&2
+			usage >&2
+			exit 2
+			;;
+		*)
+			EXT_FILE=$1
+			shift
+			if [ "$#" -gt 0 ]; then
+				echo "Only one extension list path may be provided." >&2
+				usage >&2
+				exit 2
+			fi
+			;;
+	esac
+done
 
 if [ ! -f "$EXT_FILE" ]; then
-	echo "Error: extensions file not found: $EXT_FILE"
+	echo "Error: extensions file not found: $EXT_FILE" >&2
 	exit 1
 fi
 
+if [ "$dry_run" -eq 0 ] && ! command -v code >/dev/null 2>&1; then
+	echo "Error: 'code' CLI not found. Add it from VS Code: 'Shell Command: Install 'code' command in PATH'" >&2
+	exit 1
+fi
+
+if [ "$dry_run" -eq 1 ]; then
+	echo "Dry run: no VS Code extensions will be installed."
+fi
 echo "Installing extensions from: $EXT_FILE"
 
-while IFS= read -r line || [ -n "$line" ]; do
-	# trim
-	line="${line#${line%%[![:space:]]*}}"
-	line="${line%${line##*[![:space:]]}}"
+status=0
+while IFS= read -r raw_line || [ -n "$raw_line" ]; do
+	line="$(trim "$raw_line")"
 
 	[ -z "$line" ] && continue
 	case "$line" in
@@ -35,54 +100,52 @@ while IFS= read -r line || [ -n "$line" ]; do
 	esac
 
 	raw="$line"
-	installed=false
+	id="$(extension_id "$raw")"
 
-	candidate="$raw"
-	attempted_candidates=()
-	while true; do
-		attempted_candidates+=("$candidate")
-		echo "Attempting: $candidate"
-		if code --install-extension "$candidate" >/dev/null 2>&1; then
-			echo "Installed: $candidate"
-			installed=true
-			break
-		else
-			if [[ "$candidate" == *@* ]]; then
-				candidate="${candidate%@*}"
-			elif [[ "$candidate" == *-* ]]; then
-				candidate="${candidate%-*}"
-			else
-				break
-			fi
-		fi
-	done
-
-	# If install command failed but extension is actually present, treat as success.
-	if [ "$installed" = false ]; then
-		for c in "${attempted_candidates[@]}"; do
-			if [[ "$c" == *@* ]]; then
-				list_args=(--list-extensions --show-versions)
-			else
-				list_args=(--list-extensions)
-			fi
-			if code "${list_args[@]}" 2>/dev/null | grep -Fxq "$c"; then
-				echo "Detected already installed: $c"
-				installed=true
-				break
-			fi
-		done
+	if ! [[ "$id" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
+		echo "Invalid VS Code extension spec: $raw" >&2
+		status=1
+		continue
 	fi
 
-	if [ "$installed" = false ]; then
-		if [ "${#attempted_candidates[@]}" -gt 0 ]; then
-			last_index=$(( ${#attempted_candidates[@]} - 1 ))
-			last_tried="${attempted_candidates[$last_index]}"
-		else
-			last_tried="(none)"
-		fi
-		echo "Failed to install: $raw (last tried: $last_tried)"
+	if ! is_pinned_spec "$raw"; then
+		echo "Extension spec is not pinned with @version: $raw" >&2
+		status=1
+		continue
 	fi
 
+	if [ "$dry_run" -eq 1 ]; then
+		echo "Would ensure pinned extension is installed: $raw"
+		continue
+	fi
+
+	if installed_exact_spec "$raw"; then
+		echo "Already installed: $raw"
+		continue
+	fi
+
+	if installed_extension_id "$id"; then
+		echo "Updating installed extension to pinned version: $raw"
+	else
+		echo "Installing pinned extension: $raw"
+	fi
+
+	if ! code --install-extension "$raw" --force >/dev/null 2>&1; then
+		echo "Failed to install pinned extension: $raw" >&2
+		status=1
+		continue
+	fi
+
+	if installed_exact_spec "$raw"; then
+		echo "Installed: $raw"
+	else
+		echo "Pinned extension did not verify after install: $raw" >&2
+		status=1
+	fi
 done < "$EXT_FILE"
 
-echo "Done."
+if [ "$status" -eq 0 ]; then
+	echo "Done."
+fi
+
+exit "$status"

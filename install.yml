@@ -45,3 +45,13 @@ files:
     target: ~/.config/alacritty/alacritty.toml
     mode: symlink
     parent: require
+  - id: vscode-settings
+    source: configs/vsc/settings.json
+    target: ~/Library/Application Support/Code/User/settings.json
+    mode: symlink
+    parent: create
+  - id: vscode-keybindings
+    source: configs/vsc/keybindings.json
+    target: ~/Library/Application Support/Code/User/keybindings.json
+    mode: symlink
+    parent: create

@@ -109,6 +109,7 @@ require_command ruby
 "$ROOT/script/manifest" validate >/dev/null
 ruby -c "$ROOT/lib/dotfiles/manifest.rb" >/dev/null
 ruby -c "$ROOT/script/manifest" >/dev/null
+"$ROOT/script/vsc-extension-bulk-install" --dry-run >/dev/null
 
 shell_files=(
     "script/bootstrap"
