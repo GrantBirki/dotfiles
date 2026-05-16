@@ -104,7 +104,6 @@ validate_alias_metadata() {
 }
 
 require_command bash
-require_command rg
 require_command ruby
 
 "$ROOT/script/manifest" validate >/dev/null
@@ -127,7 +126,7 @@ shell_files=(
 
 while IFS= read -r shell_file; do
     shell_files+=("$shell_file")
-done < <(rg --files shell | sort)
+done < <(find shell -type f -name '*.bash' -print | sort)
 
 for shell_file in "${shell_files[@]}"; do
     bash -n "$shell_file"
@@ -145,7 +144,7 @@ done
 
 while IFS= read -r yaml_file; do
     validate_yaml "$yaml_file"
-done < <(rg --files --hidden --glob '!.git/**' --glob '*.yml' --glob '*.yaml' | sort)
+done < <(find . -path './.git' -prune -o \( -name '*.yml' -o -name '*.yaml' \) -print | sed 's#^\./##' | sort)
 
 validate_alias_metadata
 
@@ -168,12 +167,22 @@ for dead_path in "${dead_paths[@]}"; do
     fi
 done
 
-if rg -n -i "linux_server|gitconfig_linux|linuxbrew|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c" \
-    --hidden \
-    --glob '!.git/**' \
-    --glob '!script/test' \
-    "$ROOT"; then
-    fail "dead Linux-era marker found"
+dead_marker_pattern="linux_server|gitconfig_linux|linuxbrew|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c"
+if command -v rg >/dev/null 2>&1; then
+    if rg -n -i "$dead_marker_pattern" \
+        --hidden \
+        --glob '!.git/**' \
+        --glob '!script/test' \
+        "$ROOT"; then
+        fail "dead Linux-era marker found"
+    fi
+else
+    if grep -R -n -I -i -E "$dead_marker_pattern" \
+        --exclude=script/test \
+        --exclude-dir=.git \
+        "$ROOT"; then
+        fail "dead Linux-era marker found"
+    fi
 fi
 
 echo "All checks passed."
