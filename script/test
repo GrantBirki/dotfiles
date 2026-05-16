@@ -177,10 +177,14 @@ if command -v rg >/dev/null 2>&1; then
         fail "dead Linux-era marker found"
     fi
 else
-    if grep -R -n -I -i -E "$dead_marker_pattern" \
-        --exclude=script/test \
-        --exclude-dir=.git \
-        "$ROOT"; then
+    dead_marker_found=0
+    while IFS= read -r scanned_file; do
+        if grep -n -I -i -E "$dead_marker_pattern" "$scanned_file"; then
+            dead_marker_found=1
+        fi
+    done < <(find "$ROOT" -path "$ROOT/.git" -prune -o -type f ! -path "$ROOT/script/test" -print)
+
+    if [ "$dead_marker_found" -eq 1 ]; then
         fail "dead Linux-era marker found"
     fi
 fi
