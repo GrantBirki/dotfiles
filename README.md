@@ -1,44 +1,50 @@
-<h1 align="center">dotfiles 📂</h1>
-<p align="center">
-  Dotfiles and general machine / terminal configurations
-</p>
+# dotfiles
 
-<h2 align="center"><img src="assets/term.png" alt="terminal" align="center" width="600px" /></h2>
+Personal macOS dotfiles and terminal/editor configuration.
 
-## About 💡
+## Support
 
-This repository is a personal collection of my dotfiles for work and fun.
+This repo is intentionally macOS-only. It manages Bash-focused shell dotfiles,
+Alacritty, Karabiner-Elements, and VS Code configuration for my local Mac setup.
 
-These files have been tested to work on the following operating systems:
+## Setup
 
-- Linux
-- MacOS
+1. Clone this repository.
+2. Run `script/bootstrap` to install the vendored Ruby helper environment.
+3. Preview the managed symlinks with `script/install --dry-run`.
+4. Run `script/install`.
+5. Run `source ~/.bashrc` in existing shells, or open a new terminal.
 
-> Note: All terminal dotfiles are for `bash`.
+`script/install` reads `install.yml`, creates symlinks for managed files, moves
+replaced targets into `~/dotfiles_old`, and writes install state to
+`.dotfiles/state/` inside the repo. The state directory is ignored by git.
 
-## Setup ⚙️
+If a managed file needs to be restored from the latest install state, run
+`script/restore`. Use `script/restore --dry-run` to preview restore actions, or
+`script/restore --state PATH` to restore from a specific state file.
 
-If you wish to install these files on a brand new machine, simply do the following:
+## Scripts
 
-1. Clone this repository
-2. Run `script/install`
+- `script/bootstrap`: install Ruby helpers from the committed Bundler config and vendored cache.
+- `script/install`: symlink the manifest-managed macOS dotfiles/configs into place.
+- `script/restore`: restore managed paths from a prior install state file.
+- `script/doctor`: check local prerequisites, manifest validity, symlink health, and install state.
+- `script/test`: run syntax, config, alias metadata, and cleanup checks.
+- `script/vsc-extension-bulk-install`: install VS Code extensions from the tracked macOS extension list.
 
-> This will symlink all the defined files in the `script/install` script and backup your current dotfiles so they can be recovered later if something is not working correctly
+## Structure
 
-If anything goes wrong, you can always run `script/restore` to roll back your original dotfiles.
+- `install.yml`: manifest of files managed by `script/install`.
+- `dotfiles/`: shell, Git, Ruby, and alias metadata.
+- `shell/`: modular Bash startup code and user-facing shell functions.
+- `configs/alacritty/`: macOS Alacritty config.
+- `configs/karabiner/`: Karabiner-Elements config.
+- `configs/vsc/mac/`: macOS VS Code settings, keybindings, and extensions.
+- `lib/dotfiles/`: Ruby helpers used by scripts.
 
-## Table of Contents 📚
+## Maintenance
 
-- [dotfiles](./dotfiles/)
-- [alacritty config](./configs/alacritty/alacritty.yml)
-- [management scripts](./script/)
-
-## Screenshots 📸
-
-**MacOS**:
-
-![MacOS](https://user-images.githubusercontent.com/23362539/184522853-d1dc1e6a-827d-43e5-ae11-ba9327cf0150.png)
-
-**Ubuntu**:
-
-![Ubuntu](https://user-images.githubusercontent.com/23362539/186451719-a38a56d9-d309-40b4-b029-eea03c6e3d30.png)
+Run `script/test` before publishing changes. The checks are intentionally
+local and generic: they validate syntax, structured config, alias metadata, the
+install manifest, and stale platform-specific paths without committing
+private-context scanners into the public repo.

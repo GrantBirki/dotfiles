@@ -1,0 +1,47 @@
+---
+files:
+  - id: bashrc
+    source: dotfiles/.bashrc
+    target: ~/.bashrc
+    mode: symlink
+    parent: create
+  - id: bash-aliases
+    source: dotfiles/.bash_aliases
+    target: ~/.bash_aliases
+    mode: symlink
+    parent: create
+  - id: bash-logout
+    source: dotfiles/.bash_logout
+    target: ~/.bash_logout
+    mode: symlink
+    parent: create
+  - id: profile
+    source: dotfiles/.profile
+    target: ~/.profile
+    mode: symlink
+    parent: create
+  - id: rubocop
+    source: dotfiles/.rubocop.yml
+    target: ~/.rubocop.yml
+    mode: symlink
+    parent: create
+  - id: irbrc
+    source: dotfiles/.irbrc
+    target: ~/.irbrc
+    mode: symlink
+    parent: create
+  - id: gitconfig
+    source: dotfiles/.gitconfig_mac
+    target: ~/.gitconfig
+    mode: symlink
+    parent: create
+  - id: karabiner
+    source: configs/karabiner/karabiner.json
+    target: ~/.config/karabiner/karabiner.json
+    mode: symlink
+    parent: require
+  - id: alacritty
+    source: configs/alacritty/alacritty_mac.toml
+    target: ~/.config/alacritty/alacritty.toml
+    mode: symlink
+    parent: require

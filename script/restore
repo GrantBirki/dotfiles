@@ -1,18 +1,163 @@
-#!/bin/bash
-############################
-# This script restores all files in the ~/dotfiles_old directory to their original locations
-############################
+#!/usr/bin/env bash
 
-########## Variables
+set -euo pipefail
+IFS=$'\n\t'
 
-olddir=~/dotfiles_old # old dotfiles backup directory
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+source "$DIR/script/env" "$@"
 
-##########
+dry_run=0
+state_file=""
 
-# loop through all files in the old directory and restore them to their original locations
-shopt -s dotglob # enable dotglob
-for file in $olddir/*; do
-    nameFmt=$(basename "$file")
-    echo "Moving $nameFmt from $olddir to ~/"
-    mv $file ~/$nameFmt
+usage() {
+    cat <<'USAGE'
+Usage: script/restore [--dry-run] [--state PATH]
+
+Restore files from a previous script/install state file.
+USAGE
+}
+
+timestamp() {
+    date "+%Y%m%d%H%M%S"
+}
+
+unique_path() {
+    local path=$1
+    local base
+    local candidate
+    local counter=1
+
+    if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+        printf "%s\n" "$path"
+        return 0
+    fi
+
+    base="$path.$(timestamp)"
+    candidate="$base"
+    while [ -e "$candidate" ] || [ -L "$candidate" ]; do
+        candidate="$base.$counter"
+        counter=$((counter + 1))
+    done
+
+    printf "%s\n" "$candidate"
+}
+
+latest_state_file() {
+    local latest=""
+    local candidate
+
+    while IFS= read -r candidate; do
+        [ -n "$candidate" ] || continue
+        latest="$candidate"
+    done < <(find "$DIR/.dotfiles/state" -type f -name 'install-*.tsv' 2>/dev/null | sort)
+
+    printf "%s\n" "$latest"
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --dry-run|-n)
+            dry_run=1
+            shift
+            ;;
+        --state)
+            if [ "$#" -lt 2 ]; then
+                echo "--state requires a path" >&2
+                exit 2
+            fi
+            state_file=$2
+            shift 2
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        --production)
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
 done
+
+if [ -z "$state_file" ]; then
+    state_file="$(latest_state_file)"
+fi
+
+if [ -z "$state_file" ] || [ ! -f "$state_file" ]; then
+    echo "No install state file found. Run script/install first, or pass --state PATH." >&2
+    exit 1
+fi
+
+echo "Using install state: $state_file"
+
+status=0
+{
+    IFS= read -r _header || true
+    while IFS=$'\t' read -r id source_path target_path backup_path action; do
+        [ -n "${id:-}" ] || continue
+
+        case "$action" in
+            linked)
+                if [ -n "$backup_path" ]; then
+                    if [ ! -e "$backup_path" ] && [ ! -L "$backup_path" ]; then
+                        echo "Backup for $id is missing: $backup_path" >&2
+                        status=1
+                        continue
+                    fi
+
+                    if [ -e "$target_path" ] || [ -L "$target_path" ]; then
+                        if [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
+                            if [ "$dry_run" -eq 1 ]; then
+                                echo "Would remove managed symlink: $target_path"
+                            else
+                                rm "$target_path"
+                            fi
+                        else
+                            safety_backup="$(unique_path "$target_path.dotfiles_restore_backup")"
+                            if [ "$dry_run" -eq 1 ]; then
+                                echo "Would move current $target_path to $safety_backup"
+                            else
+                                mv "$target_path" "$safety_backup"
+                            fi
+                        fi
+                    fi
+
+                    if [ "$dry_run" -eq 1 ]; then
+                        echo "Would restore $backup_path to $target_path"
+                    else
+                        mkdir -p "$(dirname "$target_path")"
+                        mv "$backup_path" "$target_path"
+                    fi
+                elif [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
+                    if [ "$dry_run" -eq 1 ]; then
+                        echo "Would remove managed symlink with no original backup: $target_path"
+                    else
+                        rm "$target_path"
+                    fi
+                elif [ ! -e "$target_path" ] && [ ! -L "$target_path" ]; then
+                    echo "$target_path is already absent."
+                else
+                    echo "Refusing to remove unexpected current target for $id: $target_path" >&2
+                    status=1
+                fi
+                ;;
+            already-linked|skipped-parent)
+                echo "Skipping $id ($action)."
+                ;;
+            *)
+                echo "Unknown action for $id: $action" >&2
+                status=1
+                ;;
+        esac
+    done
+} < "$state_file"
+
+if [ "$status" -eq 0 ]; then
+    echo "Restore complete."
+fi
+
+exit "$status"

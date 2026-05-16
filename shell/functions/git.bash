@@ -1,47 +1,48 @@
-# https://github.com/GrantBirki/dotfiles
-
-alias ls='eza --group-directories-first --icons=auto --color=auto'
-alias ll='ls -lah'
-alias la='ls -A'
-alias l='ls -CF'
-alias c='clear'
-alias cdc='cd ~/code || cd /mnt/c/code'
-alias gbr='git branch | grep -v -E "(master|main)" | xargs git branch -D'
-alias gp='git pull'
-alias gc='git checkout -b'
-alias gpf='git fetch --all && echo -e "\033[1;34m[#]\033[0m Creating Backup Branch: backup-$(git symbolic-ref --short -q HEAD)" && git branch backup-$(git symbolic-ref --short -q HEAD) && echo -e "\033[1;34m[#]\033[0m Force Pull Current Branch from Remote Origin" && git reset --hard origin/$(git symbolic-ref --short -q HEAD) && echo -e "\033[1;34m[#]\033[0m Current Branch is set to state of remote Origin and backup branch created."'
-alias lss='eza -lag --time-style=long-iso'
-alias h='history | rg -i'
-alias dockernuke='docker rm -vf $(docker ps -a -q) && docker rmi -f $(docker images -a -q) && docker system prune -a --volumes'
-alias pbcopy='xsel --clipboard --input'
-alias pbpaste='xsel --clipboard --output'
-alias pss='ps -auxf | head -1 ; ps -auxf | grep -i'
-alias ssh="TERM=xterm-256color $(which ssh)"
-alias ss='set_secret'
-
-set_secret() {
-    local var_name="${1:-}"
-    local secret_value=""
-
-    if [ "$#" -ne 1 ]; then
-        echo "Usage: set_secret VAR_NAME" >&2
-        return 2
-    fi
-
-    if [[ ! "$var_name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-        echo "set_secret requires a valid shell variable name." >&2
-        return 2
-    fi
-
-    if ! read -rs -p "${var_name}=" secret_value; then
-        echo >&2
+gbr() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "gbr must be run inside a git repository." >&2
         return 1
     fi
-    echo
 
-    printf -v "$var_name" '%s' "$secret_value"
-    export "$var_name"
-    unset secret_value
+    local current_branch=""
+    local default_branch=""
+    local remote_head=""
+    local branch
+    local branches_to_delete=()
+
+    current_branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+    remote_head=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)
+    if [ -n "$remote_head" ]; then
+        default_branch="${remote_head#origin/}"
+    fi
+
+    while IFS= read -r branch; do
+        [ -n "$branch" ] || continue
+        case "$branch" in
+            main|master)
+                continue
+                ;;
+        esac
+
+        if [ -n "$default_branch" ] && [ "$branch" = "$default_branch" ]; then
+            continue
+        fi
+
+        if [ -n "$current_branch" ] && [ "$branch" = "$current_branch" ]; then
+            continue
+        fi
+
+        branches_to_delete+=("$branch")
+    done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+
+    if [ "${#branches_to_delete[@]}" -eq 0 ]; then
+        echo "No local branches to delete."
+        return 0
+    fi
+
+    echo "Deleting local branches:"
+    printf "  %s\n" "${branches_to_delete[@]}"
+    git branch -D "${branches_to_delete[@]}"
 }
 
 gcm() {

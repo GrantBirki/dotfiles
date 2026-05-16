@@ -1,0 +1,33 @@
+---
+version: 2
+updates:
+  - package-ecosystem: bundler
+    vendor: true
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "21:00"
+    groups:
+      prod-ruby-dependencies:
+        dependency-type: production
+        patterns:
+          - "*"
+      dev-ruby-dependencies:
+        dependency-type: development
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 45
+  - package-ecosystem: github-actions
+    directory: "/"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "21:00"
+    cooldown:
+      default-days: 45

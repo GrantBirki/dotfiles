@@ -1,5 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# alias for script/install
+set -euo pipefail
+IFS=$'\n\t'
 
-script/install
+export DOTFILES_USE_RBENV=1
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+source "$DIR/script/env" "$@"
+
+mkdir -p "$DIR/vendor/cache" "$DIR/vendor/gems"
+
+actual_ruby_version="$(ruby -e 'print RUBY_VERSION')"
+if [ "$actual_ruby_version" != "$DOTFILES_RUBY_VERSION" ]; then
+  echo "Expected Ruby $DOTFILES_RUBY_VERSION but found $actual_ruby_version." >&2
+  echo "Install/select the pinned Ruby with rbenv, then rerun script/bootstrap." >&2
+  exit 1
+fi
+
+if [ "${BUNDLE_WITHOUT:-}" = "" ]; then
+  echo -e "${BLUE}Installing vendored gems for ${PURPLE}development${BLUE}...${OFF}"
+else
+  echo -e "${BLUE}Installing vendored gems for ${GREEN}production${BLUE}...${OFF}"
+fi
+
+bundle install --local

@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+source "$ROOT/script/env" "$@"
+cd "$ROOT"
+
+fail() {
+    echo "Error: $*" >&2
+    exit 1
+}
+
+require_command() {
+    local command_name=$1
+    command -v "$command_name" >/dev/null 2>&1 || fail "required command not found: $command_name"
+}
+
+validate_jsonc() {
+    local file_path=$1
+
+    ruby -rjson - "$file_path" <<'RUBY'
+path = ARGV.fetch(0)
+text = File.read(path)
+out = +""
+in_string = false
+escape = false
+chars = text.each_char.to_a
+i = 0
+
+while i < chars.length
+  char = chars[i]
+
+  if in_string
+    out << char
+    if escape
+      escape = false
+    elsif char == "\\"
+      escape = true
+    elsif char == '"'
+      in_string = false
+    end
+  elsif char == '"'
+    in_string = true
+    out << char
+  elsif char == "/" && chars[i + 1] == "/"
+    i += 2
+    i += 1 while i < chars.length && chars[i] != "\n"
+    out << "\n" if i < chars.length
+  else
+    out << char
+  end
+
+  i += 1
+end
+
+JSON.parse(out.gsub(/,\s*([}\]])/, '\1'))
+RUBY
+}
+
+validate_yaml() {
+    local file_path=$1
+
+    ruby -ryaml - "$file_path" <<'RUBY'
+path = ARGV.fetch(0)
+text = File.read(path)
+begin
+  YAML.safe_load(text, permitted_classes: [], permitted_symbols: [], aliases: false)
+rescue ArgumentError
+  YAML.safe_load(text, [], [], false)
+end
+RUBY
+}
+
+validate_alias_metadata() {
+    local missing_metadata
+    local missing_commands
+
+    set +u
+    source "$ROOT/dotfiles/.bash_aliases"
+    set -u
+
+    missing_metadata=$(
+        comm -23 \
+            <(_tracked_alias_commands | awk 'NF && !seen[$0]++' | sort) \
+            <(_documented_alias_names "$ROOT/dotfiles/.aliases.yml" | sort)
+    )
+    missing_commands=$(
+        comm -13 \
+            <(_tracked_alias_commands | awk 'NF && !seen[$0]++' | sort) \
+            <(_documented_alias_names "$ROOT/dotfiles/.aliases.yml" | sort)
+    )
+
+    if [ -n "$missing_metadata" ]; then
+        printf "Tracked aliases/functions missing metadata:\n%s\n" "$missing_metadata" >&2
+        return 1
+    fi
+
+    if [ -n "$missing_commands" ]; then
+        printf "Documented aliases/functions not found in .bash_aliases:\n%s\n" "$missing_commands" >&2
+        return 1
+    fi
+}
+
+require_command bash
+require_command rg
+require_command ruby
+
+"$ROOT/script/manifest" validate >/dev/null
+ruby -c "$ROOT/lib/dotfiles/manifest.rb" >/dev/null
+ruby -c "$ROOT/script/manifest" >/dev/null
+
+shell_files=(
+    "script/bootstrap"
+    "script/env"
+    "script/install"
+    "script/restore"
+    "script/test"
+    "script/vsc-extension-bulk-install"
+    "script/doctor"
+    "dotfiles/.bash_aliases"
+    "dotfiles/.bash_logout"
+    "dotfiles/.bashrc"
+    "dotfiles/.profile"
+)
+
+while IFS= read -r shell_file; do
+    shell_files+=("$shell_file")
+done < <(rg --files shell | sort)
+
+for shell_file in "${shell_files[@]}"; do
+    bash -n "$shell_file"
+done
+
+json_files=(
+    "configs/karabiner/karabiner.json"
+    "configs/vsc/mac/keybindings.json"
+    "configs/vsc/mac/settings.json"
+)
+
+for json_file in "${json_files[@]}"; do
+    validate_jsonc "$json_file"
+done
+
+while IFS= read -r yaml_file; do
+    validate_yaml "$yaml_file"
+done < <(rg --files --hidden --glob '!.git/**' --glob '*.yml' --glob '*.yaml' | sort)
+
+validate_alias_metadata
+
+dead_paths=(
+    "configs/vsc/linux"
+    "configs/alacritty/alacritty.toml"
+    "configs/alacritty/old_alacritty.yml"
+    "dotfiles/.gitconfig"
+    "dotfiles/.gitconfig_linux"
+    "dotfiles/linux_server"
+)
+
+for dead_path in "${dead_paths[@]}"; do
+    if [ -f "$dead_path" ]; then
+        fail "dead file still exists: $dead_path"
+    fi
+
+    if [ -d "$dead_path" ] && [ -n "$(find "$dead_path" -type f -print -quit)" ]; then
+        fail "dead directory still contains files: $dead_path"
+    fi
+done
+
+if rg -n -i "linux_server|gitconfig_linux|linuxbrew|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c" \
+    --hidden \
+    --glob '!.git/**' \
+    --glob '!script/test' \
+    "$ROOT"; then
+    fail "dead Linux-era marker found"
+fi
+
+echo "All checks passed."

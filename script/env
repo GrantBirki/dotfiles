@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+export OFF='\033[0m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export BLUE='\033[0;34m'
+export PURPLE='\033[0;35m'
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+export DIR
+
+REPO_NAME="$(basename "$DIR")"
+export REPO_NAME
+
+DOTFILES_RUBY_VERSION="$(cat "$DIR/.ruby-version")"
+export DOTFILES_RUBY_VERSION
+
+export BUNDLE_GEMFILE="$DIR/Gemfile"
+export BUNDLE_APP_CONFIG="$DIR/.bundle"
+
+: "${RUBY_ENV:=development}"
+export RUBY_ENV
+
+if [[ " $* " =~ " --production " ]]; then
+  export RUBY_ENV=production
+  export BUNDLE_WITHOUT="development"
+fi
+
+if [ "${DOTFILES_USE_RBENV:-}" = "1" ]; then
+  export RBENV_VERSION="$DOTFILES_RUBY_VERSION"
+  if [ -d "$HOME/.rbenv/shims" ]; then
+    export PATH="$HOME/.rbenv/shims:$PATH"
+  fi
+fi
