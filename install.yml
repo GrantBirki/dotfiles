@@ -31,7 +31,7 @@ files:
     mode: symlink
     parent: create
   - id: gitconfig
-    source: dotfiles/.gitconfig_mac
+    source: dotfiles/.gitconfig
     target: ~/.gitconfig
     mode: symlink
     parent: create
@@ -41,7 +41,7 @@ files:
     mode: symlink
     parent: require
   - id: alacritty
-    source: configs/alacritty/alacritty_mac.toml
+    source: configs/alacritty/alacritty.toml
     target: ~/.config/alacritty/alacritty.toml
     mode: symlink
     parent: require

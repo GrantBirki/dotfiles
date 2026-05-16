@@ -39,7 +39,7 @@ If a managed file needs to be restored from the latest install state, run
 - `shell/`: modular Bash startup code and user-facing shell functions.
 - `configs/alacritty/`: macOS Alacritty config.
 - `configs/karabiner/`: Karabiner-Elements config.
-- `configs/vsc/mac/`: macOS VS Code settings, keybindings, and extensions.
+- `configs/vsc/`: VS Code settings, keybindings, and extensions.
 - `lib/dotfiles/`: Ruby helpers used by scripts.
 
 ## Maintenance

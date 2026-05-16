@@ -134,8 +134,8 @@ done
 
 json_files=(
     "configs/karabiner/karabiner.json"
-    "configs/vsc/mac/keybindings.json"
-    "configs/vsc/mac/settings.json"
+    "configs/vsc/keybindings.json"
+    "configs/vsc/settings.json"
 )
 
 for json_file in "${json_files[@]}"; do
@@ -150,9 +150,10 @@ validate_alias_metadata
 
 dead_paths=(
     "configs/vsc/linux"
-    "configs/alacritty/alacritty.toml"
+    "configs/vsc/mac"
     "configs/alacritty/old_alacritty.yml"
-    "dotfiles/.gitconfig"
+    "configs/alacritty/alacritty_mac.toml"
+    "dotfiles/.gitconfig_mac"
     "dotfiles/.gitconfig_linux"
     "dotfiles/linux_server"
 )

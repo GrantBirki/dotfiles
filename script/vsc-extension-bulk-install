@@ -3,13 +3,13 @@
 # Bulk-install VS Code extensions from a newline-separated list.
 # Usage:
 #   ./script/vsc-extension-bulk-install [path/to/extensions.txt]
-# If no path is provided it defaults to `../configs/vsc/mac/extensions.txt` (relative to this script).
+# If no path is provided it defaults to `../configs/vsc/extensions.txt` (relative to this script).
 
 set -uo pipefail
 IFS=$'\n\t'
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEFAULT_LIST="$DIR/../configs/vsc/mac/extensions.txt"
+DEFAULT_LIST="$DIR/../configs/vsc/extensions.txt"
 EXT_FILE="${1:-$DEFAULT_LIST}"
 
 if ! command -v code >/dev/null 2>&1; then
