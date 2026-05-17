@@ -50,7 +50,10 @@ jobs:
         with:
           egress-policy: block
           disable-telemetry: true
-          allowed-endpoints: ""
+          # harden-runner's pre-step runs before checkout, so checkout's Git transport must be allowlisted.
+          allowed-endpoints: >
+            github.com:443
+            codeload.github.com:443
           disable-sudo-and-containers: true
 
       - name: bootstrap
