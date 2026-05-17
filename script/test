@@ -83,6 +83,101 @@ YAML.safe_load(text, permitted_classes: [], permitted_symbols: [], aliases: fals
 RUBY
 }
 
+validate_bundler_supply_chain() {
+    ruby -rbundler -ryaml - "$ROOT" <<'RUBY'
+root = ARGV.fetch(0)
+failures = []
+
+config_path = File.join(root, ".bundle/config")
+config = YAML.safe_load(File.read(config_path), permitted_classes: [], permitted_symbols: [], aliases: false)
+unless config.fetch("BUNDLE_FROZEN", nil) == "true"
+  failures << ".bundle/config must set BUNDLE_FROZEN: \"true\""
+end
+
+lock_path = File.join(root, "Gemfile.lock")
+lock_text = File.read(lock_path)
+unless lock_text.match?(/\ACHECKSUMS\n|\nCHECKSUMS\n/)
+  failures << "Gemfile.lock is missing CHECKSUMS"
+end
+
+checksum_entries = {}
+in_checksums = false
+lock_text.each_line do |line|
+  stripped = line.chomp
+  if stripped == "CHECKSUMS"
+    in_checksums = true
+    next
+  end
+  next unless in_checksums
+  break if stripped.match?(/\A[A-Z][A-Z ]*\z/)
+  next if stripped.empty?
+
+  match = stripped.match(/\A  (?<name>.+) \((?<version>[^)]+)\) sha256=(?<sha>[0-9a-f]{64})\z/)
+  if match
+    checksum_entries[[match[:name], match[:version]]] = match[:sha]
+  else
+    failures << "invalid Gemfile.lock checksum line: #{stripped}"
+  end
+end
+
+specs = Bundler::LockfileParser.new(lock_text).specs
+specs.each do |spec|
+  platform = spec.platform.to_s
+  checksum_version = platform == "ruby" ? spec.version.to_s : "#{spec.version}-#{platform}"
+  next if checksum_entries.key?([spec.name, checksum_version])
+
+  failures << "missing checksum for #{spec.name} (#{checksum_version})"
+end
+
+cache_dir = File.join(root, "vendor/cache")
+expected_cache = specs.map { |spec| "#{spec.full_name}.gem" }.sort
+actual_cache = Dir.exist?(cache_dir) ? Dir.children(cache_dir).grep(/\.gem\z/).sort : []
+missing_cache = expected_cache - actual_cache
+extra_cache = actual_cache - expected_cache
+
+missing_cache.each { |gem| failures << "missing cached gem: vendor/cache/#{gem}" }
+extra_cache.each { |gem| failures << "extra cached gem: vendor/cache/#{gem}" }
+
+unless failures.empty?
+  warn failures.join("\n")
+  exit 1
+end
+RUBY
+}
+
+validate_ci_workflow_action_pins() {
+    ruby - "$ROOT" <<'RUBY'
+root = ARGV.fetch(0)
+failures = []
+workflow_paths = Dir[File.join(root, ".github/workflows/*.{yml,yaml}")].sort
+
+workflow_paths.each do |path|
+  File.readlines(path).each_with_index do |line, index|
+    match = line.match(/\buses:\s*['"]?(?<uses>[^'"\s#]+)['"]?/)
+    next unless match
+
+    value = match[:uses]
+    next if value.start_with?("./")
+
+    valid = if value.start_with?("docker://")
+      value.match?(/@sha256:[0-9a-f]{64}\z/i)
+    else
+      value.match?(/@[0-9a-f]{40}\z/i)
+    end
+    next if valid
+
+    relative = path.delete_prefix("#{root}/")
+    failures << "#{relative}:#{index + 1} action is not SHA-pinned: #{value}"
+  end
+end
+
+unless failures.empty?
+  warn failures.join("\n")
+  exit 1
+end
+RUBY
+}
+
 validate_alias_metadata() {
     local missing_metadata
     local missing_commands
@@ -246,18 +341,22 @@ ruby -c "$ROOT/lib/dotfiles/runtime.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/installer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/restorer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/doctor.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/vendor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/vsc_extension_wrapper.rb" >/dev/null
 ruby -c "$ROOT/script/manifest" >/dev/null
 ruby -c "$ROOT/script/vscode" >/dev/null
 ruby -c "$ROOT/script/install" >/dev/null
 ruby -c "$ROOT/script/restore" >/dev/null
 ruby -c "$ROOT/script/doctor" >/dev/null
+ruby -c "$ROOT/script/vendor" >/dev/null
 ruby -c "$ROOT/script/vsc-extension-bulk-install" >/dev/null
 "$ROOT/script/vscode" validate >/dev/null
 "$ROOT/script/vscode" plan >/dev/null
 "$ROOT/script/vsc-extension-bulk-install" --dry-run >/dev/null
 validate_vscode_fixture_plan
 validate_public_safety
+validate_bundler_supply_chain
+validate_ci_workflow_action_pins
 bundle exec rspec spec
 
 shell_files=(

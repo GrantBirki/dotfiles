@@ -4,6 +4,7 @@ require "spec_helper"
 require_relative "../../lib/dotfiles/doctor"
 require_relative "../../lib/dotfiles/installer"
 require_relative "../../lib/dotfiles/restorer"
+require_relative "../../lib/dotfiles/vendor"
 require_relative "../../lib/dotfiles/vsc_extension_wrapper"
 
 RSpec.describe "Ruby script entrypoints" do
@@ -32,6 +33,15 @@ RSpec.describe "Ruby script entrypoints" do
     result = run_script(File.join(ROOT, "script/doctor"))
 
     expect(result).to include(status: 2)
+  end
+
+  it "runs script/vendor through Dotfiles::Vendor" do
+    runner = instance_double(Dotfiles::Vendor, run: 4)
+    expect(Dotfiles::Vendor).to receive(:new).with(argv: ["--dry-run"]).and_return(runner)
+
+    result = run_script(File.join(ROOT, "script/vendor"), ["--dry-run"])
+
+    expect(result).to include(status: 4)
   end
 
   it "runs script/vsc-extension-bulk-install through the wrapper" do

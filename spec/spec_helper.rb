@@ -10,6 +10,7 @@ COVERAGE_TARGETS = (
     script/install
     script/manifest
     script/restore
+    script/vendor
     script/vsc-extension-bulk-install
     script/vscode
   ].map { |path| File.join(ROOT, path) }

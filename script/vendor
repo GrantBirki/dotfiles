@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/dotfiles/vendor"
+
+exit Dotfiles::Vendor.new(argv: ARGV).run
