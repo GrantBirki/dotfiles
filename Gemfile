@@ -3,5 +3,5 @@
 source "https://rubygems.org"
 
 group :development do
-  gem "rspec", "= 3.13.1"
+  gem "rspec", "3.13.2"
 end
