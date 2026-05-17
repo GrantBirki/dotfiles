@@ -1,18 +1,6 @@
-#!/bin/bash
-############################
-# This script restores all files in the ~/dotfiles_old directory to their original locations
-############################
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-########## Variables
+require_relative "../lib/dotfiles/restorer"
 
-olddir=~/dotfiles_old # old dotfiles backup directory
-
-##########
-
-# loop through all files in the old directory and restore them to their original locations
-shopt -s dotglob # enable dotglob
-for file in $olddir/*; do
-    nameFmt=$(basename "$file")
-    echo "Moving $nameFmt from $olddir to ~/"
-    mv $file ~/$nameFmt
-done
+exit Dotfiles::Restorer.new(argv: ARGV).run

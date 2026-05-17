@@ -2,12 +2,9 @@
 
 # Configuration for Alacritty, the GPU enhanced terminal emulator.
 
-live_config_reload = true
-working_directory = "/home/grantbirki/code" # you must use the full path here
-
-[shell]
-program = "/bin/bash"
-# args = ["--login"]
+[terminal.shell]
+program = "/opt/homebrew/bin/bash"
+args = ["--login"]
 
 [env]
 TERM = "xterm-256color"
@@ -54,6 +51,38 @@ action = "Paste"
 key = "V"
 mods = "Control"
 
+[[keyboard.bindings]]
+action = "CreateNewTab"
+key = "T"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "CreateNewWindow"
+key = "N"
+mods = "Control"
+
+# Word jumping with Ctrl+Arrow (what you type)
+[[keyboard.bindings]]
+key = "Left"
+mods = "Control"
+chars = "\u001bb"
+
+[[keyboard.bindings]]
+key = "Right"
+mods = "Control"
+chars = "\u001bf"
+
+# Word jumping with Alt+Arrow (backup/alternative)
+[[keyboard.bindings]]
+key = "Left"
+mods = "Alt"
+chars = "\u001bb"
+
+[[keyboard.bindings]]
+key = "Right"
+mods = "Alt"
+chars = "\u001bf"
+
 [[mouse.bindings]]
 action = "PasteSelection"
 mouse = "Right"
@@ -66,24 +95,18 @@ save_to_clipboard = true
 
 [window]
 dynamic_title = true
-opacity = 1.0
+opacity = 1
 title = "alacritty"
 [window.dimensions]
-columns = 85
-lines = 40
+columns = 80
+lines = 35
 
 [font]
-size = 18
-[font.normal]
+size = 20
 
-# meslo font details:
-# - https://github.com/andreberg/Meslo-Font
-# - https://www.nerdfonts.com/font-downloads
-# - install it: $ sudo cp -R ~/Downloads/Meslo /usr/share/fonts/truetype/ (you may need to update permissions on the font files)
-# - update font cache: $ sudo fc-cache -f -v
-# note: you may need emojis with $ sudo apt install fonts-noto
-family = "MesloLGS Nerd Font Mono"
-# family = "Noto Sans Mono" # alt font
+[general]
+live_config_reload = true
+working_directory = "/Users/birki/code" # you must use the full path here
 
 [window.padding]
 x = 5

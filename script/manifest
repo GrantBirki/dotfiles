@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require_relative "../lib/dotfiles/manifest"
+
+begin
+  command = ARGV.shift || "validate"
+  manifest = Dotfiles::Manifest.load
+
+  case command
+  when "validate"
+    manifest.validate!
+    puts "Manifest OK."
+  when "json"
+    manifest.validate!
+    puts JSON.pretty_generate(manifest.entries.map(&:to_h))
+  when "entries"
+    manifest.validate!
+    manifest.entries.each do |entry|
+      next unless entry.active?
+
+      data = entry.to_h
+      puts [
+        data.fetch("id"),
+        data.fetch("source_path"),
+        data.fetch("target_path"),
+        data.fetch("backup_path"),
+        data.fetch("target_parent"),
+        data.fetch("parent"),
+        data.fetch("mode"),
+        data.fetch("compare")
+      ].join("\t")
+    end
+  else
+    warn "Usage: script/manifest [validate|json|entries]"
+    exit 2
+  end
+rescue Dotfiles::Error => e
+  warn e.message
+  exit 1
+end

@@ -1,13 +1,15 @@
 # https://github.com/GrantBirki/dotfiles
 
+# This key is specific to my MacBook Air
+
 [core]
 	autocrlf = false
 [user]
 	email = grant.birkinbine@gmail.com
 	name = GrantBirki
-	signingkey = 49B739DDF82DE768A571C8AE9029BBCCC15C6F8C
+	signingkey = 9C0C622D9DEC4A08
 [gpg]
-	program = gpg
+	program = /opt/homebrew/bin/gpg
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [commit]
@@ -16,3 +18,8 @@
 	rebase = false
 [sequence]
 	editor = code --wait
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

@@ -1,9 +1,11 @@
 # Alacritty
 
-Valid locations for the Alacritty configuration file are:
+This repo tracks the macOS Alacritty config managed by `install.yml`.
 
-- Location Windows: `C:\Users\<user>\AppData\Roaming\alacritty\alacritty.yml`
-- Location Linux: `~/.config/alacritty/alacritty.yml`
-- Location Alt-Unix: `$XDG_CONFIG_HOME/alacritty/alacritty.yml`
+The installer links `configs/alacritty/alacritty.toml` to:
 
-> Alacritty docs can be found [here](https://github.com/alacritty/alacritty)
+```text
+~/.config/alacritty/alacritty.toml
+```
+
+Alacritty docs: https://github.com/alacritty/alacritty

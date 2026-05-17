@@ -1,0 +1,443 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+export DOTFILES_USE_RBENV=1
+source "$ROOT/script/env" "$@"
+cd "$ROOT"
+
+fail() {
+    echo "Error: $*" >&2
+    exit 1
+}
+
+require_command() {
+    local command_name=$1
+    command -v "$command_name" >/dev/null 2>&1 || fail "required command not found: $command_name"
+}
+
+validate_jsonc() {
+    local file_path=$1
+
+    ruby -rjson - "$file_path" <<'RUBY'
+path = ARGV.fetch(0)
+text = File.read(path)
+out = +""
+in_string = false
+escape = false
+chars = text.each_char.to_a
+i = 0
+
+while i < chars.length
+  char = chars[i]
+
+  if in_string
+    out << char
+    if escape
+      escape = false
+    elsif char == "\\"
+      escape = true
+    elsif char == '"'
+      in_string = false
+    end
+  elsif char == '"'
+    in_string = true
+    out << char
+  elsif char == "/" && chars[i + 1] == "/"
+    i += 2
+    i += 1 while i < chars.length && chars[i] != "\n"
+    out << "\n" if i < chars.length
+  elsif char == "/" && chars[i + 1] == "*"
+    i += 2
+    closed = false
+    while i < chars.length
+      if chars[i] == "*" && chars[i + 1] == "/"
+        i += 1
+        closed = true
+        break
+      end
+      out << "\n" if chars[i] == "\n"
+      i += 1
+    end
+    raise "unterminated block comment in #{path}" unless closed
+  else
+    out << char
+  end
+
+  i += 1
+end
+
+JSON.parse(out.gsub(/,\s*([}\]])/, '\1'))
+RUBY
+}
+
+validate_yaml() {
+    local file_path=$1
+
+    ruby -ryaml - "$file_path" <<'RUBY'
+path = ARGV.fetch(0)
+text = File.read(path)
+YAML.safe_load(text, permitted_classes: [], permitted_symbols: [], aliases: false)
+RUBY
+}
+
+validate_bundler_supply_chain() {
+    ruby -rbundler -ryaml - "$ROOT" <<'RUBY'
+root = ARGV.fetch(0)
+failures = []
+
+config_path = File.join(root, ".bundle/config")
+config = YAML.safe_load(File.read(config_path), permitted_classes: [], permitted_symbols: [], aliases: false)
+unless config.fetch("BUNDLE_FROZEN", nil) == "true"
+  failures << ".bundle/config must set BUNDLE_FROZEN: \"true\""
+end
+
+lock_path = File.join(root, "Gemfile.lock")
+lock_text = File.read(lock_path)
+unless lock_text.match?(/\ACHECKSUMS\n|\nCHECKSUMS\n/)
+  failures << "Gemfile.lock is missing CHECKSUMS"
+end
+
+checksum_entries = {}
+in_checksums = false
+lock_text.each_line do |line|
+  stripped = line.chomp
+  if stripped == "CHECKSUMS"
+    in_checksums = true
+    next
+  end
+  next unless in_checksums
+  break if stripped.match?(/\A[A-Z][A-Z ]*\z/)
+  next if stripped.empty?
+
+  match = stripped.match(/\A  (?<name>.+) \((?<version>[^)]+)\) sha256=(?<sha>[0-9a-f]{64})\z/)
+  if match
+    checksum_entries[[match[:name], match[:version]]] = match[:sha]
+  else
+    failures << "invalid Gemfile.lock checksum line: #{stripped}"
+  end
+end
+
+specs = Bundler::LockfileParser.new(lock_text).specs
+specs.each do |spec|
+  platform = spec.platform.to_s
+  checksum_version = platform == "ruby" ? spec.version.to_s : "#{spec.version}-#{platform}"
+  next if checksum_entries.key?([spec.name, checksum_version])
+
+  failures << "missing checksum for #{spec.name} (#{checksum_version})"
+end
+
+cache_dir = File.join(root, "vendor/cache")
+expected_cache = specs.map { |spec| "#{spec.full_name}.gem" }.sort
+actual_cache = Dir.exist?(cache_dir) ? Dir.children(cache_dir).grep(/\.gem\z/).sort : []
+missing_cache = expected_cache - actual_cache
+extra_cache = actual_cache - expected_cache
+
+missing_cache.each { |gem| failures << "missing cached gem: vendor/cache/#{gem}" }
+extra_cache.each { |gem| failures << "extra cached gem: vendor/cache/#{gem}" }
+
+unless failures.empty?
+  warn failures.join("\n")
+  exit 1
+end
+RUBY
+}
+
+validate_ci_workflow_action_pins() {
+    ruby - "$ROOT" <<'RUBY'
+root = ARGV.fetch(0)
+failures = []
+workflow_paths = Dir[File.join(root, ".github/workflows/*.{yml,yaml}")].sort
+
+workflow_paths.each do |path|
+  File.readlines(path).each_with_index do |line, index|
+    match = line.match(/\buses:\s*['"]?(?<uses>[^'"\s#]+)['"]?/)
+    next unless match
+
+    value = match[:uses]
+    next if value.start_with?("./")
+
+    valid = if value.start_with?("docker://")
+      value.match?(/@sha256:[0-9a-f]{64}\z/i)
+    else
+      value.match?(/@[0-9a-f]{40}\z/i)
+    end
+    next if valid
+
+    relative = path.delete_prefix("#{root}/")
+    failures << "#{relative}:#{index + 1} action is not SHA-pinned: #{value}"
+  end
+end
+
+unless failures.empty?
+  warn failures.join("\n")
+  exit 1
+end
+RUBY
+}
+
+validate_alias_metadata() {
+    local missing_metadata
+    local missing_commands
+
+    set +u
+    source "$ROOT/dotfiles/.bash_aliases"
+    set -u
+
+    missing_metadata=$(
+        comm -23 \
+            <(_tracked_alias_commands | awk 'NF && !seen[$0]++' | sort) \
+            <(_documented_alias_names "$ROOT/dotfiles/.aliases.yml" | sort)
+    )
+    missing_commands=$(
+        comm -13 \
+            <(_tracked_alias_commands | awk 'NF && !seen[$0]++' | sort) \
+            <(_documented_alias_names "$ROOT/dotfiles/.aliases.yml" | sort)
+    )
+
+    if [ -n "$missing_metadata" ]; then
+        printf "Tracked aliases/functions missing metadata:\n%s\n" "$missing_metadata" >&2
+        return 1
+    fi
+
+    if [ -n "$missing_commands" ]; then
+        printf "Documented aliases/functions not found in .bash_aliases:\n%s\n" "$missing_commands" >&2
+        return 1
+    fi
+}
+
+validate_vscode_fixture_plan() {
+    local fixture_plan
+    local fixture_user_dir
+
+    fixture_user_dir="$(mktemp -d)"
+    fixture_plan="$(
+        DOTFILES_VSCODE_INSTALLED_EXTENSIONS_FILE="$ROOT/test/fixtures/vscode/installed-extensions.txt" \
+            DOTFILES_VSCODE_USER_DIR="$fixture_user_dir" \
+            "$ROOT/script/vscode" plan --format json
+    )"
+    rm -rf "$fixture_user_dir"
+
+    ruby -rjson - "$fixture_plan" <<'RUBY'
+plan = JSON.parse(ARGV.fetch(0)).fetch("actions")
+
+def assert(message)
+  raise message unless yield
+end
+
+def action_for(plan, type, action, id: nil, key: nil)
+  plan.find do |entry|
+    entry["type"] == type &&
+      entry["action"] == action &&
+      (id.nil? || entry["id"] == id) &&
+      (key.nil? || entry["key"] == key)
+  end
+end
+
+assert("fixture should update non-auto-update drift") do
+  action_for(plan, "extension", "update", id: "donjayamanne.githistory")
+end
+
+assert("fixture should install missing baseline extension") do
+  action_for(plan, "extension", "install", id: "hashicorp.terraform")
+end
+
+assert("fixture should keep auto-updated ChatGPT") do
+  action_for(plan, "extension", "keep_auto_update", id: "openai.chatgpt")
+end
+
+assert("fixture should keep auto-updated Copilot Chat") do
+  action_for(plan, "extension", "keep_auto_update", id: "github.copilot-chat")
+end
+
+assert("fixture should prune untracked extension") do
+  action_for(plan, "extension", "prune", id: "untracked.publisher")
+end
+
+allowlist = action_for(plan, "storage", "configure", key: "extensions.autoUpdate")
+assert("fixture should configure selected auto-update allowlist") do
+  allowlist && allowlist.fetch("desired") == ["github.copilot-chat", "github.vscode-github-actions", "openai.chatgpt"]
+end
+
+denylist = action_for(plan, "storage", "configure", key: "extensions.donotAutoUpdate")
+assert("fixture should deny auto-update for tracked non-allowlisted extensions") do
+  denylist &&
+    denylist.fetch("desired").include?("donjayamanne.githistory") &&
+    !denylist.fetch("desired").include?("openai.chatgpt") &&
+    !denylist.fetch("desired").include?("github.copilot-chat") &&
+    !denylist.fetch("desired").include?("github.vscode-github-actions")
+end
+
+allowed = action_for(plan, "setting", "keep", key: "extensions.allowed") ||
+  action_for(plan, "setting", "write", key: "extensions.allowed")
+assert("fixture should pin non-auto-update extensions in extensions.allowed") do
+  allowed && allowed.fetch("desired").fetch("donjayamanne.githistory") == ["0.6.20"]
+end
+
+assert("fixture should allow only stable auto-update exceptions in extensions.allowed") do
+  allowed &&
+    allowed.fetch("desired").fetch("openai.chatgpt") == "stable" &&
+    allowed.fetch("desired").fetch("github.copilot-chat") == "stable" &&
+    allowed.fetch("desired").fetch("github.vscode-github-actions") == "stable"
+end
+RUBY
+}
+
+validate_public_safety() {
+    ruby - "$ROOT" <<'RUBY'
+root = ARGV.fetch(0)
+Dir.chdir(root) do
+  tracked_files = `git ls-files`.lines.map(&:strip)
+  blocked_paths = tracked_files.grep(%r{\Aconfigs/vsc/(?!extensions\.yml\z|keybindings\.json\z|policy\.yml\z|settings\.json\z|tasks\.json\z|snippets/)})
+  sensitive_paths = tracked_files.grep(%r{(^|/)(globalStorage|workspaceStorage|History|CachedData|logs|state\.vscdb|storage\.json|machineid|argv\.json)(/|$)})
+  failures = []
+  failures.concat(blocked_paths.map { |path| "unexpected tracked VS Code config surface: #{path}" })
+  failures.concat(sensitive_paths.map { |path| "sensitive generated path is tracked: #{path}" })
+
+  secret_patterns = [
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+    /AKIA[0-9A-Z]{16}/,
+    /gh[pousr]_[A-Za-z0-9_]{36,}/,
+    /xox[baprs]-[A-Za-z0-9-]{20,}/,
+    /sk-[A-Za-z0-9]{32,}/,
+    /(?:api[_-]?key|access[_-]?token|client[_-]?secret|refresh[_-]?token)\s*[:=]\s*["']?[A-Za-z0-9_\.\/+=-]{20,}/i
+  ]
+  skip_secret_scan = %w[script/test]
+
+  tracked_files.each do |path|
+    next if skip_secret_scan.include?(path)
+    next unless File.file?(path)
+
+    text = File.binread(path)
+    next if text.include?("\x00")
+
+    secret_patterns.each do |pattern|
+      next unless text.match?(pattern)
+
+      failures << "possible committed secret pattern in #{path}"
+      break
+    end
+  end
+
+  unless failures.empty?
+    warn failures.join("\n")
+    exit 1
+  end
+end
+RUBY
+}
+
+require_command bash
+require_command bundle
+require_command git
+require_command ruby
+
+"$ROOT/script/manifest" validate >/dev/null
+ruby -c "$ROOT/lib/dotfiles/manifest.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/vscode.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/runtime.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/installer.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/restorer.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/doctor.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/vendor.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/vsc_extension_wrapper.rb" >/dev/null
+ruby -c "$ROOT/script/manifest" >/dev/null
+ruby -c "$ROOT/script/vscode" >/dev/null
+ruby -c "$ROOT/script/install" >/dev/null
+ruby -c "$ROOT/script/restore" >/dev/null
+ruby -c "$ROOT/script/doctor" >/dev/null
+ruby -c "$ROOT/script/vendor" >/dev/null
+ruby -c "$ROOT/script/vsc-extension-bulk-install" >/dev/null
+"$ROOT/script/vscode" validate >/dev/null
+"$ROOT/script/vscode" plan >/dev/null
+"$ROOT/script/vsc-extension-bulk-install" --dry-run >/dev/null
+validate_vscode_fixture_plan
+validate_public_safety
+validate_bundler_supply_chain
+validate_ci_workflow_action_pins
+bundle exec rspec spec
+
+shell_files=(
+    "script/bootstrap"
+    "script/env"
+    "script/test"
+    "dotfiles/.bash_aliases"
+    "dotfiles/.bash_logout"
+    "dotfiles/.bashrc"
+    "dotfiles/.profile"
+)
+
+while IFS= read -r shell_file; do
+    shell_files+=("$shell_file")
+done < <(find shell -type f -name '*.bash' -print | sort)
+
+for shell_file in "${shell_files[@]}"; do
+    bash -n "$shell_file"
+done
+
+json_files=(
+    "configs/karabiner/karabiner.json"
+    "configs/vsc/keybindings.json"
+    "configs/vsc/settings.json"
+    "configs/vsc/tasks.json"
+)
+
+for json_file in "${json_files[@]}"; do
+    validate_jsonc "$json_file"
+done
+
+while IFS= read -r snippet_file; do
+    validate_jsonc "$snippet_file"
+done < <(find configs/vsc/snippets -type f -name '*.json' -print | sort)
+
+while IFS= read -r yaml_file; do
+    validate_yaml "$yaml_file"
+done < <(find . -path './.git' -prune -o \( -name '*.yml' -o -name '*.yaml' \) -print | sed 's#^\./##' | sort)
+
+validate_alias_metadata
+
+dead_paths=(
+    "configs/vsc/linux"
+    "configs/vsc/mac"
+    "configs/alacritty/old_alacritty.yml"
+    "configs/alacritty/alacritty_mac.toml"
+    "dotfiles/.gitconfig_mac"
+    "dotfiles/.gitconfig_linux"
+    "dotfiles/linux_server"
+)
+
+for dead_path in "${dead_paths[@]}"; do
+    if [ -f "$dead_path" ]; then
+        fail "dead file still exists: $dead_path"
+    fi
+
+    if [ -d "$dead_path" ] && [ -n "$(find "$dead_path" -type f -print -quit)" ]; then
+        fail "dead directory still contains files: $dead_path"
+    fi
+done
+
+dead_marker_pattern="linux_server|gitconfig_linux|linuxbrew|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c"
+if command -v rg >/dev/null 2>&1; then
+    if rg -n -i "$dead_marker_pattern" \
+        --hidden \
+        --glob '!.git/**' \
+        --glob '!script/test' \
+        "$ROOT"; then
+        fail "dead Linux-era marker found"
+    fi
+else
+    dead_marker_found=0
+    while IFS= read -r scanned_file; do
+        if grep -n -I -i -E "$dead_marker_pattern" "$scanned_file"; then
+            dead_marker_found=1
+        fi
+    done < <(find "$ROOT" -path "$ROOT/.git" -prune -o -type f ! -path "$ROOT/script/test" -print)
+
+    if [ "$dead_marker_found" -eq 1 ]; then
+        fail "dead Linux-era marker found"
+    fi
+fi
+
+echo "All checks passed."

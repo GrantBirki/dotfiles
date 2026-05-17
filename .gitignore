@@ -1,1 +1,13 @@
 *.code-profile
+.bundle/*
+!.bundle/config
+.dotfiles/
+bin/
+vendor/gems/
+tmp/
+log/
+coverage/
+.DS_Store
+.idea/
+.vscode/
+configs/vsc/mcp.json

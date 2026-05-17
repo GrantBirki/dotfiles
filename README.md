@@ -1,44 +1,34 @@
-<h1 align="center">dotfiles 📂</h1>
-<p align="center">
-  Dotfiles and general machine / terminal configurations
-</p>
+# dotfiles
 
-<h2 align="center"><img src="assets/term.png" alt="terminal" align="center" width="600px" /></h2>
+[![test](https://github.com/GrantBirki/dotfiles/actions/workflows/test.yml/badge.svg)](https://github.com/GrantBirki/dotfiles/actions/workflows/test.yml)
 
-## About 💡
+Personal macOS dotfiles for shell, Git, terminal, keyboard, and VS Code setup.
 
-This repository is a personal collection of my dotfiles for work and fun.
+## Quickstart
 
-These files have been tested to work on the following operating systems:
+To install these dotfiles, simply run the following:
 
-- Linux
-- MacOS
+```bash
+script/install
+```
 
-> Note: All terminal dotfiles are for `bash`.
+More detailed command reference:
 
-## Setup ⚙️
+```bash
+script/bootstrap
+script/install --dry-run
+script/install
+script/doctor
+```
 
-If you wish to install these files on a brand new machine, simply do the following:
+## What It Manages
 
-1. Clone this repository
-2. Run `script/install`
+- Bash, Git, Ruby, profile, and alias files
+- Alacritty and Karabiner-Elements config
+- VS Code settings, keybindings, tasks, snippets, extensions, and policy
 
-> This will symlink all the defined files in the `script/install` script and backup your current dotfiles so they can be recovered later if something is not working correctly
+## Docs
 
-If anything goes wrong, you can always run `script/restore` to roll back your original dotfiles.
-
-## Table of Contents 📚
-
-- [dotfiles](./dotfiles/)
-- [alacritty config](./configs/alacritty/alacritty.yml)
-- [management scripts](./script/)
-
-## Screenshots 📸
-
-**MacOS**:
-
-![MacOS](https://user-images.githubusercontent.com/23362539/184522853-d1dc1e6a-827d-43e5-ae11-ba9327cf0150.png)
-
-**Ubuntu**:
-
-![Ubuntu](https://user-images.githubusercontent.com/23362539/186451719-a38a56d9-d309-40b4-b029-eea03c6e3d30.png)
+- [Usage](docs/usage.md)
+- [VS Code](docs/vscode.md)
+- [Development](docs/development.md)

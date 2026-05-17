@@ -1,0 +1,105 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require_relative "../lib/dotfiles/vscode"
+
+def usage
+  warn <<~USAGE
+    Usage: script/vscode [validate|plan|apply|doctor] [options]
+
+    Options:
+      --extensions PATH           Extension manifest path
+      --policy PATH               VS Code policy manifest path
+      --settings PATH             VS Code settings.json path
+      --user-dir PATH             VS Code User directory
+      --installed-extensions PATH Fixture file for installed extension specs
+      --format text|json          Output format for plan/doctor
+      --no-prune                  Do not prune installed extensions absent from manifest
+      --help                      Show this help
+  USAGE
+end
+
+command = "plan"
+command = ARGV.shift if ARGV.first && !ARGV.first.start_with?("-")
+options = {
+  format: "text",
+  prune: true
+}
+
+until ARGV.empty?
+  arg = ARGV.shift
+  case arg
+  when "--extensions"
+    options[:extensions_path] = ARGV.shift
+  when "--policy"
+    options[:policy_path] = ARGV.shift
+  when "--settings"
+    options[:settings_path] = ARGV.shift
+  when "--user-dir"
+    options[:user_dir] = ARGV.shift
+  when "--installed-extensions"
+    options[:installed_extensions_file] = ARGV.shift
+  when "--format"
+    options[:format] = ARGV.shift
+  when "--no-prune"
+    options[:prune] = false
+  when "--help", "-h"
+    usage
+    exit 0
+  else
+    warn "Unknown option: #{arg}"
+    usage
+    exit 2
+  end
+end
+
+unless %w[text json].include?(options.fetch(:format))
+  warn "Unsupported format: #{options.fetch(:format)}"
+  exit 2
+end
+
+begin
+  manager = Dotfiles::VSCode::Manager.new(
+    extensions_path: options[:extensions_path] || Dotfiles::VSCode::DEFAULT_EXTENSIONS_PATH,
+    policy_path: options[:policy_path] || Dotfiles::VSCode::DEFAULT_POLICY_PATH,
+    settings_path: options[:settings_path] || Dotfiles::VSCode::DEFAULT_SETTINGS_PATH,
+    user_dir: options[:user_dir] || ENV["DOTFILES_VSCODE_USER_DIR"] || Dotfiles::VSCode::Manager.default_user_dir,
+    installed_extensions_file: options[:installed_extensions_file] || ENV["DOTFILES_VSCODE_INSTALLED_EXTENSIONS_FILE"],
+    prune: options.fetch(:prune)
+  )
+
+  case command
+  when "validate"
+    manager.validate!
+    puts "VS Code configuration OK."
+  when "plan"
+    actions = manager.actions
+    if options.fetch(:format) == "json"
+      puts JSON.pretty_generate({ "actions" => actions })
+    else
+      puts manager.format_actions(actions)
+    end
+  when "apply"
+    manager.apply
+    puts "VS Code configuration applied."
+  when "doctor"
+    actions = manager.doctor_actions
+    if options.fetch(:format) == "json"
+      puts JSON.pretty_generate({ "actions" => actions })
+    else
+      puts manager.format_actions(actions)
+    end
+
+    blocking = actions.reject do |action|
+      %w[keep keep_auto_update warn].include?(action.fetch("action"))
+    end
+    exit 1 unless blocking.empty?
+  else
+    warn "Usage: script/vscode [validate|plan|apply|doctor]"
+    exit 2
+  end
+rescue Dotfiles::VSCode::Error => e
+  warn e.message
+  exit 1
+end

@@ -1,0 +1,74 @@
+---
+files:
+  - id: bashrc
+    source: dotfiles/.bashrc
+    target: ~/.bashrc
+    mode: symlink
+    parent: create
+  - id: bash-aliases
+    source: dotfiles/.bash_aliases
+    target: ~/.bash_aliases
+    mode: symlink
+    parent: create
+  - id: bash-logout
+    source: dotfiles/.bash_logout
+    target: ~/.bash_logout
+    mode: symlink
+    parent: create
+  - id: profile
+    source: dotfiles/.profile
+    target: ~/.profile
+    mode: symlink
+    parent: create
+  - id: rubocop
+    source: dotfiles/.rubocop.yml
+    target: ~/.rubocop.yml
+    mode: symlink
+    parent: create
+  - id: irbrc
+    source: dotfiles/.irbrc
+    target: ~/.irbrc
+    mode: symlink
+    parent: create
+  - id: gitconfig
+    source: dotfiles/.gitconfig
+    target: ~/.gitconfig
+    mode: symlink
+    parent: create
+  - id: karabiner
+    source: configs/karabiner/karabiner.json
+    target: ~/.config/karabiner/karabiner.json
+    mode: copy
+    parent: require
+    compare: karabiner
+  - id: alacritty
+    source: configs/alacritty/alacritty.toml
+    target: ~/.config/alacritty/alacritty.toml
+    mode: symlink
+    parent: require
+  - id: vscode-settings
+    source: configs/vsc/settings.json
+    target: ~/Library/Application Support/Code/User/settings.json
+    mode: symlink
+    parent: create
+  - id: vscode-keybindings
+    source: configs/vsc/keybindings.json
+    target: ~/Library/Application Support/Code/User/keybindings.json
+    mode: symlink
+    parent: create
+  - id: vscode-tasks
+    source: configs/vsc/tasks.json
+    target: ~/Library/Application Support/Code/User/tasks.json
+    mode: symlink
+    parent: create
+  - id: vscode-snippets
+    source: configs/vsc/snippets
+    target: ~/Library/Application Support/Code/User/snippets
+    mode: symlink
+    parent: create
+  - id: vscode-mcp-private
+    source: configs/vsc/mcp.json
+    target: ~/Library/Application Support/Code/User/mcp.json
+    mode: symlink
+    parent: create
+    optional: true

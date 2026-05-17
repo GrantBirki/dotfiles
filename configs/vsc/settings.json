@@ -1,0 +1,186 @@
+{
+  "editor.bracketPairColorization.enabled": true,
+  "editor.inlineSuggest.enabled": true,
+  "editor.inlayHints.enabled": "offUnlessPressed",
+  "editor.mouseWheelZoom": true,
+  "editor.wordWrap": "on",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "extensions.autoCheckUpdates": true,
+  "extensions.autoUpdate": false,
+  "extensions.ignoreRecommendations": true,
+  "extensions.allowed": {
+    "bierner.emojisense": [
+      "0.10.0"
+    ],
+    "davidanson.vscode-markdownlint": [
+      "0.61.2"
+    ],
+    "donjayamanne.githistory": [
+      "0.6.20"
+    ],
+    "github.copilot-chat": "stable",
+    "github.vscode-github-actions": "stable",
+    "golang.go": [
+      "0.52.2"
+    ],
+    "hashicorp.terraform": [
+      "2.39.2"
+    ],
+    "ms-python.python": [
+      "2026.4.0"
+    ],
+    "ms-python.vscode-pylance": [
+      "2026.2.1"
+    ],
+    "ms-vscode.vscode-typescript-next": [
+      "6.0.20260416"
+    ],
+    "openai.chatgpt": "stable",
+    "pkief.material-icon-theme": [
+      "5.34.0"
+    ],
+    "redhat.vscode-xml": [
+      "0.29.2"
+    ],
+    "redhat.vscode-yaml": [
+      "1.23.0"
+    ],
+    "rust-lang.rust-analyzer": [
+      "0.3.2896"
+    ],
+    "yzhang.markdown-all-in-one": [
+      "3.6.3"
+    ]
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  "git.openRepositoryInParentFolders": "never",
+  "git.replaceTagsWhenPull": true,
+  "githubPullRequests.createOnPublishBranch": "never",
+  "githubPullRequests.pullBranch": "never",
+  "redhat.telemetry.enabled": false,
+  "security.workspace.trust.emptyWindow": false,
+  "security.workspace.trust.enabled": true,
+  "security.workspace.trust.startupPrompt": "always",
+  "security.workspace.trust.untrustedFiles": "prompt",
+  "telemetry.feedback.enabled": false,
+  "telemetry.telemetryLevel": "error",
+  "workbench.enableExperiments": false,
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "newUntitledFile",
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter-notebook"
+  },
+  "notebook.cellToolbarLocation": {
+    "default": "right",
+    "jupyter-notebook": "left"
+  },
+  "go.toolsEnvVars": {
+    "GO111MODULE": "auto"
+  },
+  "go.toolsManagement.autoUpdate": true,
+  "go.alternateTools": {
+    "go": "~/.goenv/shims/"
+  },
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none"
+  },
+  "python.autoComplete.addBrackets": true,
+  "rubyLsp.enabledFeatures": {
+    "codeActions": true,
+    "codeLens": true,
+    "completion": true,
+    "definition": true,
+    "diagnostics": true,
+    "documentHighlights": true,
+    "documentLink": true,
+    "documentSymbols": true,
+    "foldingRanges": true,
+    "formatting": true,
+    "hover": true,
+    "inlayHint": true,
+    "onTypeFormatting": true,
+    "references": true,
+    "selectionRanges": true,
+    "semanticHighlighting": true,
+    "workspaceSymbol": true
+  },
+  "rubyLsp.linters": null,
+  "rubyLsp.rubyVersionManager": {
+    "identifier": "rbenv"
+  },
+  "chat.agent.enabled": true,
+  "emojisense.languages": {
+    "git-commit": true,
+    "markdown": true,
+    "plaintext": {
+      "emojiDecoratorsEnabled": false,
+      "markupCompletionsEnabled": false
+    },
+    "scminput": true
+  },
+  "files.associations": {
+    "*.hujson": "jsonc",
+    "shelldap": "perl"
+  },
+  "files.exclude": {
+    "**/.ruby-lsp": false
+  },
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "*.hujson"
+      ],
+      "schema": {
+        "allowTrailingCommas": true
+      }
+    }
+  ],
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "material-icon-theme.languages.associations": {},
+  "[gemfile]": {},
+  "[go]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": false
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[python]": {
+    "editor.formatOnType": true
+  },
+  "[ruby]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.insertSpaces": true,
+    "editor.rulers": [
+      120
+    ],
+    "editor.semanticHighlighting.enabled": true,
+    "editor.tabSize": 2,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true
+  },
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  }
+}
