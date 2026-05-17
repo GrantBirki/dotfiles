@@ -14,26 +14,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6
-        with:
-          persist-credentials: false
-
-      - name: setup ruby
-        uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # pin@v1.299.0
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: false
-
-      - name: bootstrap
-        run: script/bootstrap
-
-      - name: test
-        run: script/test
-
-  sealed-test:
-    runs-on: ubuntu-latest
-    steps:
       - name: harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # pin@v2.19.3
         with:
