@@ -1,10 +1,12 @@
-# dotfiles
+# dotfiles 📁
 
 [![test](https://github.com/GrantBirki/dotfiles/actions/workflows/test.yml/badge.svg)](https://github.com/GrantBirki/dotfiles/actions/workflows/test.yml)
 
 Personal macOS dotfiles for shell, Git, terminal, keyboard, and VS Code setup.
 
-## Quickstart
+![dotfiles](./assets/term.png)
+
+## Quickstart 🚀
 
 To install these dotfiles, simply run the following:
 
