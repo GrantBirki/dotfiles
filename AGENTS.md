@@ -44,6 +44,11 @@ The repo is public. Treat every committed byte as public-facing.
 - `script/test`: The repo-native validation entrypoint. Run this before pushing.
 - `script/manifest`: Ruby helper for validating and printing `install.yml`.
 - `lib/dotfiles/manifest.rb`: Manifest parser and validation logic.
+- `lib/dotfiles/installer.rb`: Ruby implementation behind `script/install`.
+- `lib/dotfiles/restorer.rb`: Ruby implementation behind `script/restore`.
+- `lib/dotfiles/doctor.rb`: Ruby implementation behind `script/doctor`.
+- `lib/dotfiles/runtime.rb`: Small shared runtime helpers for command checks,
+  path selection, timestamps, and restrained color formatting.
 - `script/vscode`: Strict VS Code desired-state manager with `validate`, `plan`,
   `apply`, and `doctor` subcommands.
 - `script/vsc-extension-bulk-install`: Compatibility wrapper around
@@ -251,6 +256,11 @@ Ruby application.
 
 The current preference is:
 
+- Put repo orchestration in Ruby when it can be unit-tested. `script/install`,
+  `script/restore`, `script/doctor`, `script/manifest`, `script/vscode`, and
+  `script/vsc-extension-bulk-install` are Ruby entrypoints.
+- Keep Bash for shell startup/configuration and for `script/test` orchestration
+  where it is intentionally exercising shell behavior.
 - Use Ruby stdlib whenever possible.
 - Keep `Gemfile` minimal.
 - Keep `rspec` as the only top-level development gem unless the owner approves

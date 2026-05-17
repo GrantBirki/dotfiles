@@ -151,6 +151,59 @@ RSpec.describe Dotfiles::Entry do
     expect(entry.compare).to eq("karabiner")
   end
 
+  it "matches exact and karabiner-normalized targets" do
+    Dir.mktmpdir do |home|
+      ENV["HOME"] = home
+      exact = described_class.new(
+        "id" => "readme",
+        "source" => "README.md",
+        "target" => "~/.config/readme",
+        "mode" => "copy",
+        "parent" => "create"
+      )
+      FileUtils.mkdir_p(File.dirname(exact.target_path))
+      FileUtils.cp(exact.source_path, exact.target_path)
+      expect(exact.target_matches?).to eq(true)
+      File.write(exact.target_path, "different")
+      expect(exact.target_matches?).to eq(false)
+
+      source = File.join(Dotfiles::ROOT, "configs/karabiner/karabiner.json")
+      target = File.join(home, ".config/karabiner/karabiner.json")
+      FileUtils.mkdir_p(File.dirname(target))
+      data = JSON.parse(File.read(source))
+      data.fetch("profiles").first["devices"] = [{ "identifier" => "runtime" }]
+      File.write(target, JSON.pretty_generate(data))
+      karabiner = described_class.new(
+        "id" => "karabiner",
+        "source" => "configs/karabiner/karabiner.json",
+        "target" => "~/.config/karabiner/karabiner.json",
+        "mode" => "copy",
+        "parent" => "require",
+        "compare" => "karabiner"
+      )
+      expect(karabiner.target_matches?).to eq(true)
+    end
+  end
+
+  it "does not match targets for unsupported compare strategies" do
+    Dir.mktmpdir do |home|
+      ENV["HOME"] = home
+      target = File.join(home, ".config/readme")
+      FileUtils.mkdir_p(File.dirname(target))
+      FileUtils.cp(File.join(Dotfiles::ROOT, "README.md"), target)
+      unsupported = described_class.new(
+        "id" => "readme",
+        "source" => "README.md",
+        "target" => "~/.config/readme",
+        "mode" => "copy",
+        "parent" => "create",
+        "compare" => "unsupported"
+      )
+
+      expect(unsupported.target_matches?).to eq(false)
+    end
+  end
+
   it "supports inactive optional sources for private local config" do
     entry = described_class.new(
       "id" => "vscode-mcp-private",

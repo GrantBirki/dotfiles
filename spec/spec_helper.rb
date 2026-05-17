@@ -3,12 +3,17 @@
 require "coverage"
 
 ROOT = File.expand_path("..", __dir__)
-COVERAGE_TARGETS = [
-  File.join(ROOT, "lib/dotfiles/manifest.rb"),
-  File.join(ROOT, "lib/dotfiles/vscode.rb"),
-  File.join(ROOT, "script/manifest"),
-  File.join(ROOT, "script/vscode")
-].map { |path| File.realpath(path) }.freeze
+COVERAGE_TARGETS = (
+  Dir[File.join(ROOT, "lib/dotfiles/*.rb")] +
+  %w[
+    script/doctor
+    script/install
+    script/manifest
+    script/restore
+    script/vsc-extension-bulk-install
+    script/vscode
+  ].map { |path| File.join(ROOT, path) }
+).map { |path| File.realpath(path) }.freeze
 
 Coverage.start(lines: true)
 

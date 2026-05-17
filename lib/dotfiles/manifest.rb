@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 require "yaml"
 
 module Dotfiles
@@ -120,6 +121,19 @@ module Dotfiles
       expand_home(target)
     end
 
+    def target_matches?
+      return false unless File.exist?(target_path) || File.symlink?(target_path)
+
+      case compare
+      when "exact"
+        FileUtils.compare_file(source_path, target_path)
+      when "karabiner"
+        normalized_karabiner(source_path) == normalized_karabiner(target_path)
+      else
+        false
+      end
+    end
+
     def backup_path
       relative_target = target.delete_prefix("~/")
       File.join(ENV.fetch("HOME"), "dotfiles_old", relative_target)
@@ -150,6 +164,15 @@ module Dotfiles
 
     def expand_home(path)
       path.sub(/\A~(?=\/|\z)/, ENV.fetch("HOME"))
+    end
+
+    def normalized_karabiner(path)
+      data = JSON.parse(File.read(path))
+      Array(data["profiles"]).each do |profile|
+        profile.delete("devices")
+        profile.delete("virtual_hid_keyboard")
+      end
+      data
     end
   end
 

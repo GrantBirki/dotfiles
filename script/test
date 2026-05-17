@@ -242,8 +242,17 @@ require_command ruby
 "$ROOT/script/manifest" validate >/dev/null
 ruby -c "$ROOT/lib/dotfiles/manifest.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/vscode.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/runtime.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/installer.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/restorer.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/doctor.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/vsc_extension_wrapper.rb" >/dev/null
 ruby -c "$ROOT/script/manifest" >/dev/null
 ruby -c "$ROOT/script/vscode" >/dev/null
+ruby -c "$ROOT/script/install" >/dev/null
+ruby -c "$ROOT/script/restore" >/dev/null
+ruby -c "$ROOT/script/doctor" >/dev/null
+ruby -c "$ROOT/script/vsc-extension-bulk-install" >/dev/null
 "$ROOT/script/vscode" validate >/dev/null
 "$ROOT/script/vscode" plan >/dev/null
 "$ROOT/script/vsc-extension-bulk-install" --dry-run >/dev/null
@@ -254,11 +263,7 @@ bundle exec rspec spec
 shell_files=(
     "script/bootstrap"
     "script/env"
-    "script/install"
-    "script/restore"
     "script/test"
-    "script/vsc-extension-bulk-install"
-    "script/doctor"
     "dotfiles/.bash_aliases"
     "dotfiles/.bash_logout"
     "dotfiles/.bashrc"
