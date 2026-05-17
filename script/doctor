@@ -8,27 +8,103 @@ source "$DIR/script/env" "$@"
 
 issues=0
 warnings=0
+required_commands=0
+required_commands_ok=0
+optional_commands=0
+optional_commands_ok=0
+managed_ok=0
+manifest_ok=0
+vscode_manifest_ok=0
+vscode_state_ok=0
+latest_state=""
 
 ok() {
-    printf "ok: %s\n" "$*"
+    :
 }
 
 warn() {
     warnings=$((warnings + 1))
-    printf "warn: %s\n" "$*" >&2
+    printf "⚠️  %s\n" "$*" >&2
 }
 
 issue() {
     issues=$((issues + 1))
-    printf "issue: %s\n" "$*" >&2
+    printf "❌ %s\n" "$*" >&2
+}
+
+section() {
+    printf "\n%s\n" "$*"
+}
+
+success() {
+    printf "✅ %s\n" "$*"
+}
+
+info() {
+    printf "ℹ️  %s\n" "$*"
+}
+
+value() {
+    printf "%b%s%b" "$CYAN" "$*" "$OFF"
+}
+
+bad_value() {
+    printf "%b%s%b" "$RED" "$*" "$OFF"
+}
+
+warn_value() {
+    printf "%b%s%b" "$YELLOW" "$*" "$OFF"
+}
+
+target_matches() {
+    local compare=$1
+    local source_path=$2
+    local target_path=$3
+
+    ruby -rjson -e '
+      compare, source_path, target_path = ARGV
+      exit 1 unless File.exist?(target_path) || File.symlink?(target_path)
+
+      normalize_karabiner = lambda do |path|
+        data = JSON.parse(File.read(path))
+        Array(data["profiles"]).each do |profile|
+          profile.delete("devices")
+          profile.delete("virtual_hid_keyboard")
+        end
+        data
+      end
+
+      matches =
+        case compare
+        when "exact"
+          File.binread(source_path) == File.binread(target_path)
+        when "karabiner"
+          normalize_karabiner.call(source_path) == normalize_karabiner.call(target_path)
+        else
+          warn "unsupported compare strategy: #{compare}"
+          exit 2
+        end
+
+      exit(matches ? 0 : 1)
+    ' "$compare" "$source_path" "$target_path"
 }
 
 check_command() {
     local command_name=$1
     local severity=$2
 
+    if [ "$severity" = "required" ]; then
+        required_commands=$((required_commands + 1))
+    else
+        optional_commands=$((optional_commands + 1))
+    fi
+
     if command -v "$command_name" >/dev/null 2>&1; then
-        ok "found command: $command_name"
+        if [ "$severity" = "required" ]; then
+            required_commands_ok=$((required_commands_ok + 1))
+        else
+            optional_commands_ok=$((optional_commands_ok + 1))
+        fi
     elif [ "$severity" = "required" ]; then
         issue "required command missing: $command_name"
     else
@@ -46,11 +122,13 @@ check_latest_state() {
     done < <(find "$DIR/.dotfiles/state" -type f -name 'install-*.tsv' 2>/dev/null | sort)
 
     if [ -n "$latest" ]; then
-        ok "latest install state: $latest"
+        latest_state=$latest
     else
         warn "no install state found under $DIR/.dotfiles/state"
     fi
 }
+
+section "🩺 dotfiles doctor"
 
 check_command bash required
 check_command ruby required
@@ -62,15 +140,16 @@ check_command code optional
 check_command eza optional
 check_command git optional
 check_command gpg optional
+check_command sqlite3 optional
 
 if "$DIR/script/manifest" validate >/dev/null; then
-    ok "install manifest is valid"
+    manifest_ok=1
 else
     issue "install manifest validation failed"
 fi
 
 if "$DIR/script/manifest" entries >/dev/null 2>&1; then
-    while IFS=$'\t' read -r id source_path target_path _backup_path target_parent parent_policy _mode; do
+    while IFS=$'\t' read -r id source_path target_path _backup_path target_parent parent_policy mode compare; do
         if [ ! -e "$source_path" ]; then
             issue "$id source is missing: $source_path"
         fi
@@ -85,28 +164,68 @@ if "$DIR/script/manifest" entries >/dev/null 2>&1; then
             continue
         fi
 
-        if [ ! -L "$target_path" ]; then
-            issue "$id target exists but is not a symlink: $target_path"
-            continue
-        fi
+        if [ "$mode" = "symlink" ]; then
+            if [ ! -L "$target_path" ]; then
+                issue "$id target exists but is not a symlink: $target_path"
+                continue
+            fi
 
-        if [ "$(readlink "$target_path")" = "$source_path" ]; then
-            ok "$id target links to repo source"
+            if [ "$(readlink "$target_path")" = "$source_path" ]; then
+                managed_ok=$((managed_ok + 1))
+            else
+                issue "$id target symlink points elsewhere: $target_path"
+            fi
+        elif [ "$mode" = "copy" ]; then
+            if target_matches "$compare" "$source_path" "$target_path"; then
+                managed_ok=$((managed_ok + 1))
+            else
+                issue "$id target differs from repo source: $target_path"
+            fi
         else
-            issue "$id target symlink points elsewhere: $target_path"
+            issue "$id target has unsupported mode: $mode"
         fi
     done < <("$DIR/script/manifest" entries)
 fi
 
+if "$DIR/script/vscode" validate >/dev/null; then
+    vscode_manifest_ok=1
+else
+    issue "VS Code manifest validation failed"
+fi
+
+if "$DIR/script/vscode" doctor >/dev/null; then
+    vscode_state_ok=1
+else
+    issue "VS Code desired state has pending changes; run script/install --dry-run"
+fi
+
 check_latest_state
 
+success "Commands: $(value "$required_commands_ok/$required_commands") required, $(value "$optional_commands_ok/$optional_commands") optional available"
+
+if [ "$manifest_ok" -eq 1 ]; then
+    success "Manifest: valid"
+fi
+
+success "Managed files: $(value "$managed_ok") OK"
+
+if [ "$vscode_manifest_ok" -eq 1 ] && [ "$vscode_state_ok" -eq 1 ]; then
+    success "VS Code: manifests valid and desired state converged"
+elif [ "$vscode_manifest_ok" -eq 1 ]; then
+    success "VS Code: manifests valid"
+fi
+
+if [ -n "$latest_state" ]; then
+    info "Latest install state: $(value "$latest_state")"
+fi
+
 if [ "$issues" -gt 0 ]; then
-    printf "Doctor found %d issue(s) and %d warning(s).\n" "$issues" "$warnings" >&2
+    printf "\n❌ Doctor found %s issue(s) and %s warning(s).\n" "$(bad_value "$issues")" "$(warn_value "$warnings")" >&2
     exit 1
 fi
 
-printf "Doctor found no blocking issues"
+printf "\n✅ Doctor found no blocking issues"
 if [ "$warnings" -gt 0 ]; then
-    printf " (%d warning(s))" "$warnings"
+    printf " (%s warning(s))" "$(warn_value "$warnings")"
 fi
 printf ".\n"

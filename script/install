@@ -8,13 +8,43 @@ source "$DIR/script/env" "$@"
 
 dry_run=0
 install_vscode_extensions=1
+dir_changes=0
+manifest_ok=0
+manifest_changes=0
+manifest_skipped=0
+shell_changed=0
+manifest_details=()
 
 usage() {
     cat <<'USAGE'
 Usage: script/install [--dry-run] [--skip-vscode-extensions]
 
-Install managed dotfiles from install.yml.
+Install managed dotfiles from install.yml and reconcile the VS Code extension manifest.
 USAGE
+}
+
+section() {
+    printf "\n%s\n" "$*"
+}
+
+success() {
+    printf "✅ %s\n" "$*"
+}
+
+info() {
+    printf "ℹ️  %s\n" "$*"
+}
+
+warn_msg() {
+    printf "⚠️  %s\n" "$*"
+}
+
+detail() {
+    printf "   %s\n" "$*"
+}
+
+value() {
+    printf "%b%s%b" "$CYAN" "$*" "$OFF"
 }
 
 timestamp() {
@@ -54,6 +84,88 @@ record_state() {
     fi
 }
 
+target_matches() {
+    local compare=$1
+    local source_path=$2
+    local target_path=$3
+
+    ruby -rjson -e '
+      compare, source_path, target_path = ARGV
+      exit 1 unless File.exist?(target_path) || File.symlink?(target_path)
+
+      normalize_karabiner = lambda do |path|
+        data = JSON.parse(File.read(path))
+        Array(data["profiles"]).each do |profile|
+          profile.delete("devices")
+          profile.delete("virtual_hid_keyboard")
+        end
+        data
+      end
+
+      matches =
+        case compare
+        when "exact"
+          File.binread(source_path) == File.binread(target_path)
+        when "karabiner"
+          normalize_karabiner.call(source_path) == normalize_karabiner.call(target_path)
+        else
+          warn "unsupported compare strategy: #{compare}"
+          exit 2
+        end
+
+      exit(matches ? 0 : 1)
+    ' "$compare" "$source_path" "$target_path"
+}
+
+record_detail() {
+    manifest_details+=("$*")
+}
+
+mark_shell_changed() {
+    case "$1" in
+        bashrc|bash-aliases|bash-logout|profile)
+            shell_changed=1
+            ;;
+    esac
+}
+
+summarize_vscode_plan() {
+    local mode=$1
+
+    ruby -rjson -e '
+      mode = ARGV.fetch(0)
+      actions = JSON.parse(STDIN.read).fetch("actions")
+      terminal = %w[keep keep_auto_update warn]
+      actionable = actions.reject { |action| terminal.include?(action.fetch("action")) }
+      warnings = actions.select { |action| action.fetch("action") == "warn" }
+      counts = actionable.group_by { |action| [action.fetch("type"), action.fetch("action")] }
+
+      cyan = ENV.fetch("CYAN", "")
+      off = ENV.fetch("OFF", "")
+
+      if actionable.empty?
+        puts "✅ VS Code: already converged"
+      else
+        verb = mode == "dry-run" ? "would apply" : "applying"
+        puts "🔧 VS Code: #{verb} #{cyan}#{actionable.length}#{off} change(s)"
+        counts.keys.sort.each do |type, action|
+          puts "   #{type} #{action}: #{cyan}#{counts.fetch([type, action]).length}#{off}"
+        end
+      end
+
+      warnings.each do |action|
+        puts "⚠️  VS Code: #{action.fetch("message")}"
+      end
+    ' "$mode"
+}
+
+vscode_actionable_count() {
+    ruby -rjson -e '
+      actions = JSON.parse(STDIN.read).fetch("actions")
+      puts actions.count { |action| !%w[keep keep_auto_update warn].include?(action.fetch("action")) }
+    '
+}
+
 for arg in "$@"; do
     case "$arg" in
         --dry-run|-n)
@@ -81,7 +193,10 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
+section "🚀 dotfiles install"
+
 "$DIR/script/manifest" validate >/dev/null
+success "Install manifest is valid"
 
 state_dir="$DIR/.dotfiles/state"
 state_file="$(unique_path "$state_dir/install-$(timestamp).tsv")"
@@ -92,78 +207,134 @@ if [ "$dry_run" -eq 0 ]; then
     printf "id\tsource_path\ttarget_path\tbackup_path\taction\n" > "$state_tmp"
     trap 'rm -f "$state_tmp"' EXIT
 else
-    echo "Dry run: no filesystem changes will be made."
+    warn_msg "Dry run: no filesystem changes will be made"
 fi
 
 mkdir_args=("$HOME/.cargo" "$HOME/.local/bin")
 for dir_path in "${mkdir_args[@]}"; do
+    if [ -d "$dir_path" ]; then
+        continue
+    fi
+
+    dir_changes=$((dir_changes + 1))
     if [ "$dry_run" -eq 1 ]; then
-        echo "Would ensure directory exists: $dir_path"
+        record_detail "would create directory: $dir_path"
     else
         mkdir -p "$dir_path"
+        record_detail "created directory: $dir_path"
     fi
 done
 
-while IFS=$'\t' read -r id source_path target_path backup_path target_parent parent_policy mode; do
-    if [ "$mode" != "symlink" ]; then
+section "📁 Managed files"
+
+while IFS=$'\t' read -r id source_path target_path backup_path target_parent parent_policy mode compare; do
+    if [ "$mode" != "symlink" ] && [ "$mode" != "copy" ]; then
         echo "Unsupported install mode for $id: $mode" >&2
         exit 1
     fi
 
     if [ "$parent_policy" = "require" ] && [ ! -d "$target_parent" ]; then
-        echo "Skipping $id because parent directory is missing: $target_parent"
+        manifest_skipped=$((manifest_skipped + 1))
+        warn_msg "Skipping $id because parent directory is missing: $target_parent"
         record_state "$id" "$source_path" "$target_path" "" "skipped-parent"
         continue
     fi
 
     if [ "$parent_policy" = "create" ]; then
-        if [ "$dry_run" -eq 1 ]; then
-            echo "Would ensure parent directory exists: $target_parent"
-        else
-            mkdir -p "$target_parent"
+        if [ ! -d "$target_parent" ]; then
+            dir_changes=$((dir_changes + 1))
+            if [ "$dry_run" -eq 1 ]; then
+                record_detail "would create parent directory for $id: $target_parent"
+            else
+                record_detail "created parent directory for $id: $target_parent"
+                mkdir -p "$target_parent"
+            fi
         fi
     fi
 
-    if [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
-        echo "$target_path already links to $source_path"
+    if [ "$mode" = "symlink" ] && [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
+        manifest_ok=$((manifest_ok + 1))
         record_state "$id" "$source_path" "$target_path" "" "already-linked"
         continue
     fi
+
+    if [ "$mode" = "copy" ] && target_matches "$compare" "$source_path" "$target_path"; then
+        manifest_ok=$((manifest_ok + 1))
+        record_state "$id" "$source_path" "$target_path" "" "already-copied"
+        continue
+    fi
+
+    manifest_changes=$((manifest_changes + 1))
+    mark_shell_changed "$id"
 
     actual_backup_path=""
     if [ -e "$target_path" ] || [ -L "$target_path" ]; then
         actual_backup_path="$(unique_path "$backup_path")"
         if [ "$dry_run" -eq 1 ]; then
-            echo "Would move existing $target_path to $actual_backup_path"
+            record_detail "would back up $id: $target_path -> $actual_backup_path"
         else
             mkdir -p "$(dirname "$actual_backup_path")"
             mv "$target_path" "$actual_backup_path"
+            record_detail "backed up $id: $target_path -> $actual_backup_path"
         fi
     fi
 
     if [ "$dry_run" -eq 1 ]; then
-        echo "Would create symlink: $target_path -> $source_path"
+        if [ "$mode" = "symlink" ]; then
+            record_detail "would link $id: $target_path -> $source_path"
+        else
+            record_detail "would copy $id: $source_path -> $target_path"
+        fi
     else
-        ln -s "$source_path" "$target_path"
+        if [ "$mode" = "symlink" ]; then
+            ln -s "$source_path" "$target_path"
+            record_detail "linked $id: $target_path -> $source_path"
+        else
+            cp "$source_path" "$target_path"
+            record_detail "copied $id: $source_path -> $target_path"
+        fi
     fi
-    record_state "$id" "$source_path" "$target_path" "$actual_backup_path" "linked"
+    if [ "$mode" = "symlink" ]; then
+        record_state "$id" "$source_path" "$target_path" "$actual_backup_path" "linked"
+    else
+        record_state "$id" "$source_path" "$target_path" "$actual_backup_path" "copied"
+    fi
 done < <("$DIR/script/manifest" entries)
+
+if [ "$manifest_changes" -eq 0 ] && [ "$dir_changes" -eq 0 ] && [ "$manifest_skipped" -eq 0 ]; then
+    success "Managed files: $(value "$manifest_ok") already converged"
+else
+    success "Managed files: $(value "$manifest_changes") file change(s), $(value "$dir_changes") directory change(s), $(value "$manifest_ok") already converged"
+    for item in "${manifest_details[@]}"; do
+        detail "$item"
+    done
+fi
 
 if [ "$dry_run" -eq 0 ]; then
     mv "$state_tmp" "$state_file"
     trap - EXIT
-    echo "Install state written to $state_file"
+    success "Install state: $(value "$state_file")"
 fi
+
+section "🧩 VS Code"
 
 if [ "$install_vscode_extensions" -eq 1 ]; then
+    vscode_plan_json="$("$DIR/script/vscode" plan --format json)"
     if [ "$dry_run" -eq 1 ]; then
-        "$DIR/script/vsc-extension-bulk-install" --dry-run
+        printf "%s" "$vscode_plan_json" | summarize_vscode_plan "dry-run"
     else
-        "$DIR/script/vsc-extension-bulk-install"
+        vscode_changes="$(printf "%s" "$vscode_plan_json" | vscode_actionable_count)"
+        printf "%s" "$vscode_plan_json" | summarize_vscode_plan "apply"
+        if [ "$vscode_changes" -gt 0 ]; then
+            "$DIR/script/vscode" apply
+        fi
     fi
 else
-    echo "Skipping VS Code extension install."
+    info "VS Code: skipped"
 fi
 
-echo "Make sure to run 'source ~/.bashrc' to finish applying shell changes."
-echo "Done."
+if [ "$dry_run" -eq 0 ] && [ "$shell_changed" -eq 1 ]; then
+    info "Existing shells may need: source ~/.bashrc"
+fi
+
+printf "\n✅ Done\n"

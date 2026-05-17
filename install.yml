@@ -38,8 +38,9 @@ files:
   - id: karabiner
     source: configs/karabiner/karabiner.json
     target: ~/.config/karabiner/karabiner.json
-    mode: symlink
+    mode: copy
     parent: require
+    compare: karabiner
   - id: alacritty
     source: configs/alacritty/alacritty.toml
     target: ~/.config/alacritty/alacritty.toml
@@ -55,3 +56,19 @@ files:
     target: ~/Library/Application Support/Code/User/keybindings.json
     mode: symlink
     parent: create
+  - id: vscode-tasks
+    source: configs/vsc/tasks.json
+    target: ~/Library/Application Support/Code/User/tasks.json
+    mode: symlink
+    parent: create
+  - id: vscode-snippets
+    source: configs/vsc/snippets
+    target: ~/Library/Application Support/Code/User/snippets
+    mode: symlink
+    parent: create
+  - id: vscode-mcp-private
+    source: configs/vsc/mcp.json
+    target: ~/Library/Application Support/Code/User/mcp.json
+    mode: symlink
+    parent: create
+    optional: true

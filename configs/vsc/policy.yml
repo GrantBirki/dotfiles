@@ -1,0 +1,32 @@
+---
+# Machine-readable VS Code policy for this public macOS baseline.
+# Keep this generic and safe to publish.
+
+settings:
+  extensions.autoCheckUpdates: true
+  extensions.autoUpdate: false
+  extensions.ignoreRecommendations: true
+  redhat.telemetry.enabled: false
+  security.workspace.trust.emptyWindow: false
+  security.workspace.trust.enabled: true
+  security.workspace.trust.startupPrompt: always
+  security.workspace.trust.untrustedFiles: prompt
+  telemetry.feedback.enabled: false
+  telemetry.telemetryLevel: error
+  workbench.enableExperiments: false
+
+generated_settings:
+  extensions.allowed: extensions
+
+selected_auto_update:
+  allow_from_extension_manifest: true
+  deny_all_others: true
+  require_vscode_closed: true
+  backup_before_write: true
+
+settings_sync:
+  extensions: warn-only
+
+unmanaged_user_files:
+  warn:
+    - profiles

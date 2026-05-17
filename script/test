@@ -4,6 +4,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+export DOTFILES_USE_RBENV=1
 source "$ROOT/script/env" "$@"
 cd "$ROOT"
 
@@ -48,6 +49,19 @@ while i < chars.length
     i += 2
     i += 1 while i < chars.length && chars[i] != "\n"
     out << "\n" if i < chars.length
+  elsif char == "/" && chars[i + 1] == "*"
+    i += 2
+    closed = false
+    while i < chars.length
+      if chars[i] == "*" && chars[i + 1] == "/"
+        i += 1
+        closed = true
+        break
+      end
+      out << "\n" if chars[i] == "\n"
+      i += 1
+    end
+    raise "unterminated block comment in #{path}" unless closed
   else
     out << char
   end
@@ -65,11 +79,7 @@ validate_yaml() {
     ruby -ryaml - "$file_path" <<'RUBY'
 path = ARGV.fetch(0)
 text = File.read(path)
-begin
-  YAML.safe_load(text, permitted_classes: [], permitted_symbols: [], aliases: false)
-rescue ArgumentError
-  YAML.safe_load(text, [], [], false)
-end
+YAML.safe_load(text, permitted_classes: [], permitted_symbols: [], aliases: false)
 RUBY
 }
 
@@ -103,13 +113,143 @@ validate_alias_metadata() {
     fi
 }
 
+validate_vscode_fixture_plan() {
+    local fixture_plan
+    local fixture_user_dir
+
+    fixture_user_dir="$(mktemp -d)"
+    fixture_plan="$(
+        DOTFILES_VSCODE_INSTALLED_EXTENSIONS_FILE="$ROOT/test/fixtures/vscode/installed-extensions.txt" \
+            DOTFILES_VSCODE_USER_DIR="$fixture_user_dir" \
+            "$ROOT/script/vscode" plan --format json
+    )"
+    rm -rf "$fixture_user_dir"
+
+    ruby -rjson - "$fixture_plan" <<'RUBY'
+plan = JSON.parse(ARGV.fetch(0)).fetch("actions")
+
+def assert(message)
+  raise message unless yield
+end
+
+def action_for(plan, type, action, id: nil, key: nil)
+  plan.find do |entry|
+    entry["type"] == type &&
+      entry["action"] == action &&
+      (id.nil? || entry["id"] == id) &&
+      (key.nil? || entry["key"] == key)
+  end
+end
+
+assert("fixture should update non-auto-update drift") do
+  action_for(plan, "extension", "update", id: "donjayamanne.githistory")
+end
+
+assert("fixture should install missing baseline extension") do
+  action_for(plan, "extension", "install", id: "hashicorp.terraform")
+end
+
+assert("fixture should keep auto-updated ChatGPT") do
+  action_for(plan, "extension", "keep_auto_update", id: "openai.chatgpt")
+end
+
+assert("fixture should keep auto-updated Copilot Chat") do
+  action_for(plan, "extension", "keep_auto_update", id: "github.copilot-chat")
+end
+
+assert("fixture should prune untracked extension") do
+  action_for(plan, "extension", "prune", id: "untracked.publisher")
+end
+
+allowlist = action_for(plan, "storage", "configure", key: "extensions.autoUpdate")
+assert("fixture should configure selected auto-update allowlist") do
+  allowlist && allowlist.fetch("desired") == ["github.copilot-chat", "github.vscode-github-actions", "openai.chatgpt"]
+end
+
+denylist = action_for(plan, "storage", "configure", key: "extensions.donotAutoUpdate")
+assert("fixture should deny auto-update for tracked non-allowlisted extensions") do
+  denylist &&
+    denylist.fetch("desired").include?("donjayamanne.githistory") &&
+    !denylist.fetch("desired").include?("openai.chatgpt") &&
+    !denylist.fetch("desired").include?("github.copilot-chat") &&
+    !denylist.fetch("desired").include?("github.vscode-github-actions")
+end
+
+allowed = action_for(plan, "setting", "keep", key: "extensions.allowed") ||
+  action_for(plan, "setting", "write", key: "extensions.allowed")
+assert("fixture should pin non-auto-update extensions in extensions.allowed") do
+  allowed && allowed.fetch("desired").fetch("donjayamanne.githistory") == ["0.6.20"]
+end
+
+assert("fixture should allow only stable auto-update exceptions in extensions.allowed") do
+  allowed &&
+    allowed.fetch("desired").fetch("openai.chatgpt") == "stable" &&
+    allowed.fetch("desired").fetch("github.copilot-chat") == "stable" &&
+    allowed.fetch("desired").fetch("github.vscode-github-actions") == "stable"
+end
+RUBY
+}
+
+validate_public_safety() {
+    ruby - "$ROOT" <<'RUBY'
+root = ARGV.fetch(0)
+Dir.chdir(root) do
+  tracked_files = `git ls-files`.lines.map(&:strip)
+  blocked_paths = tracked_files.grep(%r{\Aconfigs/vsc/(?!extensions\.yml\z|keybindings\.json\z|policy\.yml\z|settings\.json\z|tasks\.json\z|snippets/)})
+  sensitive_paths = tracked_files.grep(%r{(^|/)(globalStorage|workspaceStorage|History|CachedData|logs|state\.vscdb|storage\.json|machineid|argv\.json)(/|$)})
+  failures = []
+  failures.concat(blocked_paths.map { |path| "unexpected tracked VS Code config surface: #{path}" })
+  failures.concat(sensitive_paths.map { |path| "sensitive generated path is tracked: #{path}" })
+
+  secret_patterns = [
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+    /AKIA[0-9A-Z]{16}/,
+    /gh[pousr]_[A-Za-z0-9_]{36,}/,
+    /xox[baprs]-[A-Za-z0-9-]{20,}/,
+    /sk-[A-Za-z0-9]{32,}/,
+    /(?:api[_-]?key|access[_-]?token|client[_-]?secret|refresh[_-]?token)\s*[:=]\s*["']?[A-Za-z0-9_\.\/+=-]{20,}/i
+  ]
+  skip_secret_scan = %w[script/test]
+
+  tracked_files.each do |path|
+    next if skip_secret_scan.include?(path)
+    next unless File.file?(path)
+
+    text = File.binread(path)
+    next if text.include?("\x00")
+
+    secret_patterns.each do |pattern|
+      next unless text.match?(pattern)
+
+      failures << "possible committed secret pattern in #{path}"
+      break
+    end
+  end
+
+  unless failures.empty?
+    warn failures.join("\n")
+    exit 1
+  end
+end
+RUBY
+}
+
 require_command bash
+require_command bundle
+require_command git
 require_command ruby
 
 "$ROOT/script/manifest" validate >/dev/null
 ruby -c "$ROOT/lib/dotfiles/manifest.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/vscode.rb" >/dev/null
 ruby -c "$ROOT/script/manifest" >/dev/null
+ruby -c "$ROOT/script/vscode" >/dev/null
+"$ROOT/script/vscode" validate >/dev/null
+"$ROOT/script/vscode" plan >/dev/null
 "$ROOT/script/vsc-extension-bulk-install" --dry-run >/dev/null
+validate_vscode_fixture_plan
+validate_public_safety
+bundle exec rspec spec
 
 shell_files=(
     "script/bootstrap"
@@ -137,11 +277,16 @@ json_files=(
     "configs/karabiner/karabiner.json"
     "configs/vsc/keybindings.json"
     "configs/vsc/settings.json"
+    "configs/vsc/tasks.json"
 )
 
 for json_file in "${json_files[@]}"; do
     validate_jsonc "$json_file"
 done
+
+while IFS= read -r snippet_file; do
+    validate_jsonc "$snippet_file"
+done < <(find configs/vsc/snippets -type f -name '*.json' -print | sort)
 
 while IFS= read -r yaml_file; do
     validate_yaml "$yaml_file"

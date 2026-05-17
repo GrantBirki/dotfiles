@@ -101,7 +101,7 @@ status=0
         [ -n "${id:-}" ] || continue
 
         case "$action" in
-            linked)
+            linked|copied)
                 if [ -n "$backup_path" ]; then
                     if [ ! -e "$backup_path" ] && [ ! -L "$backup_path" ]; then
                         echo "Backup for $id is missing: $backup_path" >&2
@@ -110,7 +110,7 @@ status=0
                     fi
 
                     if [ -e "$target_path" ] || [ -L "$target_path" ]; then
-                        if [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
+                        if [ "$action" = "linked" ] && [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
                             if [ "$dry_run" -eq 1 ]; then
                                 echo "Would remove managed symlink: $target_path"
                             else
@@ -132,12 +132,14 @@ status=0
                         mkdir -p "$(dirname "$target_path")"
                         mv "$backup_path" "$target_path"
                     fi
-                elif [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
+                elif [ "$action" = "linked" ] && [ -L "$target_path" ] && [ "$(readlink "$target_path")" = "$source_path" ]; then
                     if [ "$dry_run" -eq 1 ]; then
                         echo "Would remove managed symlink with no original backup: $target_path"
                     else
                         rm "$target_path"
                     fi
+                elif [ "$action" = "copied" ]; then
+                    echo "No original backup was recorded for copied target $id; leaving $target_path in place."
                 elif [ ! -e "$target_path" ] && [ ! -L "$target_path" ]; then
                     echo "$target_path is already absent."
                 else
@@ -145,7 +147,7 @@ status=0
                     status=1
                 fi
                 ;;
-            already-linked|skipped-parent)
+            already-linked|already-copied|skipped-parent)
                 echo "Skipping $id ($action)."
                 ;;
             *)

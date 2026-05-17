@@ -6,8 +6,9 @@ require "yaml"
 module Dotfiles
   ROOT = File.expand_path("../..", __dir__)
   DEFAULT_MANIFEST_PATH = File.join(ROOT, "install.yml")
-  VALID_MODES = ["symlink"].freeze
+  VALID_MODES = ["copy", "symlink"].freeze
   VALID_PARENT_POLICIES = ["create", "require"].freeze
+  VALID_COMPARE_STRATEGIES = ["exact", "karabiner"].freeze
 
   class Manifest
     attr_reader :path, :entries
@@ -68,14 +69,13 @@ module Dotfiles
 
     def safe_load_yaml(text)
       YAML.safe_load(text, permitted_classes: [], permitted_symbols: [], aliases: false)
-    rescue ArgumentError
-      YAML.safe_load(text, [], [], false)
     end
   end
 
   class Entry
     REQUIRED_KEYS = ["id", "source", "target", "mode", "parent"].freeze
-    attr_reader :id, :source, :target, :mode, :parent
+    BOOLEAN_VALUES = [true, false].freeze
+    attr_reader :id, :source, :target, :mode, :parent, :compare, :optional
 
     def initialize(attrs)
       unless attrs.is_a?(Hash)
@@ -87,6 +87,8 @@ module Dotfiles
       @target = attrs["target"].to_s
       @mode = attrs["mode"].to_s
       @parent = attrs["parent"].to_s
+      @compare = attrs.fetch("compare", "exact").to_s
+      @optional = attrs.fetch("optional", false)
     end
 
     def validate(index:)
@@ -97,15 +99,21 @@ module Dotfiles
       end
 
       errors << "#{id}: source must be repo-relative" if source.start_with?("/", "~")
-      errors << "#{id}: source does not exist: #{source}" unless File.exist?(source_path)
+      errors << "#{id}: optional must be true or false" unless BOOLEAN_VALUES.include?(optional)
+      errors << "#{id}: source does not exist: #{source}" if !optional && !File.exist?(source_path)
       errors << "#{id}: target must start with ~/; got #{target}" unless target.start_with?("~/")
       errors << "#{id}: unsupported mode #{mode}" unless VALID_MODES.include?(mode)
       errors << "#{id}: unsupported parent policy #{parent}" unless VALID_PARENT_POLICIES.include?(parent)
+      errors << "#{id}: unsupported compare strategy #{compare}" unless VALID_COMPARE_STRATEGIES.include?(compare)
       errors
     end
 
     def source_path
       File.join(ROOT, source)
+    end
+
+    def active?
+      !optional || File.exist?(source_path)
     end
 
     def target_path
@@ -128,6 +136,9 @@ module Dotfiles
         "target" => target,
         "mode" => mode,
         "parent" => parent,
+        "compare" => compare,
+        "optional" => optional,
+        "active" => active?,
         "source_path" => source_path,
         "target_path" => target_path,
         "backup_path" => backup_path,

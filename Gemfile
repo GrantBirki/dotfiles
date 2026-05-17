@@ -2,4 +2,6 @@
 
 source "https://rubygems.org"
 
-# Ruby helper scripts in this repo currently use only stdlib.
+group :development do
+  gem "rspec", "= 3.13.1"
+end

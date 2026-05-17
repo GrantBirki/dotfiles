@@ -18,6 +18,8 @@ begin
   when "entries"
     manifest.validate!
     manifest.entries.each do |entry|
+      next unless entry.active?
+
       data = entry.to_h
       puts [
         data.fetch("id"),
@@ -26,7 +28,8 @@ begin
         data.fetch("backup_path"),
         data.fetch("target_parent"),
         data.fetch("parent"),
-        data.fetch("mode")
+        data.fetch("mode"),
+        data.fetch("compare")
       ].join("\t")
     end
   else

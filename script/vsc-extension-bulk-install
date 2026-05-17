@@ -1,57 +1,31 @@
 #!/usr/bin/env bash
 
-# Bulk-install exact VS Code extension pins from a newline-separated list.
-# Usage:
-#   ./script/vsc-extension-bulk-install [--dry-run] [path/to/extensions.txt]
-# If no path is provided it defaults to `../configs/vsc/extensions.txt` (relative to this script).
+# Compatibility wrapper for the VS Code desired-state manager.
 
 set -euo pipefail
 IFS=$'\n\t'
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEFAULT_LIST="$DIR/../configs/vsc/extensions.txt"
-EXT_FILE="$DEFAULT_LIST"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 dry_run=0
+prune=1
+extensions_path=""
 
 usage() {
 	cat <<'USAGE'
-Usage: script/vsc-extension-bulk-install [--dry-run] [path/to/extensions.txt]
+Usage: script/vsc-extension-bulk-install [--dry-run] [--no-prune] [path/to/extensions.yml]
 
-Install the exact VS Code extension versions tracked in configs/vsc/extensions.txt.
+Compatibility wrapper around `script/vscode`.
 USAGE
-}
-
-trim() {
-	local value=$1
-	value="${value#${value%%[![:space:]]*}}"
-	value="${value%${value##*[![:space:]]}}"
-	printf "%s" "$value"
-}
-
-extension_id() {
-	local spec=$1
-	printf "%s" "${spec%@*}"
-}
-
-is_pinned_spec() {
-	local spec=$1
-	[[ "$spec" == *@* ]]
-}
-
-installed_exact_spec() {
-	local spec=$1
-	code --list-extensions --show-versions 2>/dev/null | grep -Fxq "$spec"
-}
-
-installed_extension_id() {
-	local id=$1
-	code --list-extensions 2>/dev/null | grep -Fxq "$id"
 }
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		--dry-run|-n)
 			dry_run=1
+			shift
+			;;
+		--no-prune)
+			prune=0
 			shift
 			;;
 		--help|-h)
@@ -64,10 +38,10 @@ while [ "$#" -gt 0 ]; do
 			exit 2
 			;;
 		*)
-			EXT_FILE=$1
+			extensions_path=$1
 			shift
 			if [ "$#" -gt 0 ]; then
-				echo "Only one extension list path may be provided." >&2
+				echo "Only one extension manifest path may be provided." >&2
 				usage >&2
 				exit 2
 			fi
@@ -75,77 +49,19 @@ while [ "$#" -gt 0 ]; do
 	esac
 done
 
-if [ ! -f "$EXT_FILE" ]; then
-	echo "Error: extensions file not found: $EXT_FILE" >&2
-	exit 1
-fi
-
-if [ "$dry_run" -eq 0 ] && ! command -v code >/dev/null 2>&1; then
-	echo "Error: 'code' CLI not found. Add it from VS Code: 'Shell Command: Install 'code' command in PATH'" >&2
-	exit 1
-fi
-
+args=()
 if [ "$dry_run" -eq 1 ]; then
-	echo "Dry run: no VS Code extensions will be installed."
-fi
-echo "Installing extensions from: $EXT_FILE"
-
-status=0
-while IFS= read -r raw_line || [ -n "$raw_line" ]; do
-	line="$(trim "$raw_line")"
-
-	[ -z "$line" ] && continue
-	case "$line" in
-		\#*) continue ;;
-	esac
-
-	raw="$line"
-	id="$(extension_id "$raw")"
-
-	if ! [[ "$id" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
-		echo "Invalid VS Code extension spec: $raw" >&2
-		status=1
-		continue
-	fi
-
-	if ! is_pinned_spec "$raw"; then
-		echo "Extension spec is not pinned with @version: $raw" >&2
-		status=1
-		continue
-	fi
-
-	if [ "$dry_run" -eq 1 ]; then
-		echo "Would ensure pinned extension is installed: $raw"
-		continue
-	fi
-
-	if installed_exact_spec "$raw"; then
-		echo "Already installed: $raw"
-		continue
-	fi
-
-	if installed_extension_id "$id"; then
-		echo "Updating installed extension to pinned version: $raw"
-	else
-		echo "Installing pinned extension: $raw"
-	fi
-
-	if ! code --install-extension "$raw" --force >/dev/null 2>&1; then
-		echo "Failed to install pinned extension: $raw" >&2
-		status=1
-		continue
-	fi
-
-	if installed_exact_spec "$raw"; then
-		echo "Installed: $raw"
-	else
-		echo "Pinned extension did not verify after install: $raw" >&2
-		status=1
-	fi
-done < "$EXT_FILE"
-
-if [ "$status" -eq 0 ]; then
-	echo "Done."
+	args+=("plan")
+else
+	args+=("apply")
 fi
 
-exit "$status"
+if [ "$prune" -eq 0 ]; then
+	args+=("--no-prune")
+fi
+
+if [ -n "$extensions_path" ]; then
+	args+=("--extensions" "$extensions_path")
+fi
+
+"$DIR/script/vscode" "${args[@]}"
