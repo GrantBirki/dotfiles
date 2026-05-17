@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "time"
 require "yaml"
+require_relative "runtime"
 
 module Dotfiles
   module VSCode
@@ -517,7 +518,7 @@ module Dotfiles
       end
 
       def command?(name)
-        system("command", "-v", name, out: File::NULL, err: File::NULL)
+        Runtime.command?(name)
       end
 
       def extension_id_from_spec(spec)
