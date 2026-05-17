@@ -42,6 +42,8 @@ The repo is public. Treat every committed byte as public-facing.
 - `script/doctor`: Checks local command availability, manifest validity, managed-file
   health, and install state.
 - `script/test`: The repo-native validation entrypoint. Run this before pushing.
+- `script/test-check`: Ruby validation helper called by `script/test` for
+  JSONC, YAML, supply-chain, workflow, fixture, and public-safety checks.
 - `script/manifest`: Ruby helper for validating and printing `install.yml`.
 - `lib/dotfiles/manifest.rb`: Manifest parser and validation logic.
 - `lib/dotfiles/installer.rb`: Ruby implementation behind `script/install`.
@@ -49,6 +51,9 @@ The repo is public. Treat every committed byte as public-facing.
 - `lib/dotfiles/doctor.rb`: Ruby implementation behind `script/doctor`.
 - `lib/dotfiles/runtime.rb`: Small shared runtime helpers for command checks,
   path selection, timestamps, and restrained color formatting.
+- `lib/dotfiles/test_checks.rb`: Test-time validators used by
+  `script/test-check`. Keep validation logic here rather than embedding Ruby in
+  Bash scripts.
 - `script/vscode`: Strict VS Code desired-state manager with `validate`, `plan`,
   `apply`, and `doctor` subcommands.
 - `script/vsc-extension-bulk-install`: Compatibility wrapper around
@@ -261,6 +266,10 @@ The current preference is:
   `script/vsc-extension-bulk-install` are Ruby entrypoints.
 - Keep Bash for shell startup/configuration and for `script/test` orchestration
   where it is intentionally exercising shell behavior.
+- Do not embed Ruby programs in Bash scripts with heredocs, `ruby -e`, or
+  similar inline snippets when the logic can live in a dedicated Ruby file.
+  Put that code in `lib/dotfiles/` or a Ruby `script/` entrypoint and cover it
+  with RSpec.
 - Use Ruby stdlib whenever possible.
 - Keep `Gemfile` minimal.
 - Keep `rspec` as the only top-level development gem unless the owner approves

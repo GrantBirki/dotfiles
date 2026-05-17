@@ -9,7 +9,7 @@ source "$DIR/script/env" "$@"
 
 mkdir -p "$DIR/vendor/cache" "$DIR/vendor/gems"
 
-actual_ruby_version="$(ruby -e 'print RUBY_VERSION')"
+actual_ruby_version="$(ruby -v | awk '{print $2}')"
 if [ "$actual_ruby_version" != "$DOTFILES_RUBY_VERSION" ]; then
   echo "Expected Ruby $DOTFILES_RUBY_VERSION but found $actual_ruby_version." >&2
   echo "Install/select the pinned Ruby with rbenv, then rerun script/bootstrap." >&2

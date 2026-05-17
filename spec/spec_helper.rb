@@ -10,6 +10,7 @@ COVERAGE_TARGETS = (
     script/install
     script/manifest
     script/restore
+    script/test-check
     script/vendor
     script/vsc-extension-bulk-install
     script/vscode
