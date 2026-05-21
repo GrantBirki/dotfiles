@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+export DOTFILES_SFW_SHIM_DIR="${DOTFILES_SFW_SHIM_DIR:-$HOME/.local/share/dotfiles/sfw-shims}"
+export DOTFILES_SFW_REQUIRE="${DOTFILES_SFW_REQUIRE:-1}"
+
+case ":$PATH:" in
+    *":$DOTFILES_SFW_SHIM_DIR:"*) ;;
+    *) export PATH="$DOTFILES_SFW_SHIM_DIR:$PATH" ;;
+esac
+
+exec codex "$@"

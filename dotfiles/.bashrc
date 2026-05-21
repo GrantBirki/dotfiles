@@ -36,7 +36,8 @@ for module in \
   input \
   ssh-gpg \
   editor \
-  languages
+  languages \
+  socket-firewall
 do
   module_path="$DOTFILES_ROOT/shell/$module.bash"
   [ -r "$module_path" ] && . "$module_path"
