@@ -32,7 +32,7 @@ alias ss='set_secret'
 alias gp='git pull'
 
 # User-facing bash functions that should always exist in .aliases.yml.
-ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh set_secret aliases_help aliases)
+ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh ssh-with-key set_secret aliases_help aliases)
 
 for _dotfiles_function_module in \
     history \

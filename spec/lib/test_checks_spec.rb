@@ -227,6 +227,69 @@ RSpec.describe Dotfiles::TestChecks do
     end
   end
 
+  describe Dotfiles::TestChecks::GitSecretivePolicy do
+    def valid_gitconfig
+      <<~CONFIG
+        [core]
+          autocrlf = false
+          sshCommand = ~/.local/bin/git-secretive-ssh
+        [user]
+          email = grant.birkinbine@gmail.com
+          name = GrantBirki
+          signingkey = ~/.config/git/secretive_git_key.pub
+        [gpg]
+          format = ssh
+        [gpg "ssh"]
+          program = git-secretive-ssh-keygen
+          allowedSignersFile = ~/.config/git/allowed_signers
+        [commit]
+          gpgSign = true
+        [tag]
+          gpgSign = true
+          forceSignAnnotated = true
+      CONFIG
+    end
+
+    it "accepts the Secretive-only Git policy" do
+      root = Dir.mktmpdir
+      write_file(root, "dotfiles/.gitconfig", valid_gitconfig)
+
+      expect(described_class.validate(root)).to eq(true)
+    end
+
+    it "rejects classic GPG signing, private signing keys, and missing enforcement" do
+      root = Dir.mktmpdir
+      write_file(root, "dotfiles/.gitconfig", <<~CONFIG)
+        [core]
+          sshCommand = ssh
+        [user]
+          signingkey = ~/.ssh/id_ed25519
+        [gpg]
+          program = /opt/homebrew/bin/gpg
+          format = openpgp
+        [commit]
+          gpgSign = false
+      CONFIG
+
+      expect { described_class.validate(root) }
+        .to raise_error(Dotfiles::TestChecks::Error) { |error|
+          expect(error.message).to include(
+            "dotfiles/.gitconfig must set core.sshcommand=~/.local/bin/git-secretive-ssh",
+            "dotfiles/.gitconfig must set gpg.format=ssh",
+            "dotfiles/.gitconfig must enable commit.gpgsign",
+            "dotfiles/.gitconfig must enable tag.gpgsign",
+            "dotfiles/.gitconfig must not set classic GPG signing key gpg.program",
+            "dotfiles/.gitconfig user.signingkey must not point at a private SSH key path"
+          )
+        }
+    end
+
+    it "reports a missing Git config" do
+      expect { described_class.validate(Dir.mktmpdir) }
+        .to raise_error(Dotfiles::TestChecks::Error, /dotfiles\/.gitconfig not found/)
+    end
+  end
+
   describe Dotfiles::TestChecks::PublicSafety do
     it "accepts safe tracked files" do
       root = Dir.mktmpdir
@@ -242,11 +305,13 @@ RSpec.describe Dotfiles::TestChecks do
         described_class.validate(root, tracked_files: [
           "configs/vsc/mcp.json",
           "configs/vsc/snippets/example.json",
+          "configs/git/secretive_git_key.pub",
           "Library/Application Support/Code/User/globalStorage/state.vscdb"
         ])
       }.to raise_error(Dotfiles::TestChecks::Error) { |error|
         expect(error.message).to include(
           "unexpected tracked VS Code config surface: configs/vsc/mcp.json",
+          "local Secretive Git key material must not be tracked: configs/git/secretive_git_key.pub",
           "sensitive generated path is tracked: Library/Application Support/Code/User/globalStorage/state.vscdb"
         )
         expect(error.message).not_to include("configs/vsc/snippets/example.json")
@@ -295,11 +360,13 @@ RSpec.describe Dotfiles::TestChecks do
       expect(Dotfiles::TestChecks::BundlerSupplyChain).to receive(:validate).with("/repo")
       expect(Dotfiles::TestChecks::CIWorkflowActionPins).to receive(:validate).with("/repo")
       expect(Dotfiles::TestChecks::VSCodeFixturePlan).to receive(:validate).with("{}")
+      expect(Dotfiles::TestChecks::GitSecretivePolicy).to receive(:validate).with("/repo")
       expect(Dotfiles::TestChecks::PublicSafety).to receive(:validate).with("/repo")
 
       expect(run_cli(["bundler-supply-chain", "/repo"]).first).to eq(0)
       expect(run_cli(["ci-workflow-action-pins", "/repo"]).first).to eq(0)
       expect(run_cli(["vscode-fixture-plan", "{}"]).first).to eq(0)
+      expect(run_cli(["git-secretive-policy", "/repo"]).first).to eq(0)
       expect(run_cli(["public-safety", "/repo"]).first).to eq(0)
     end
 

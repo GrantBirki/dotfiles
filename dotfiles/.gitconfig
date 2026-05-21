@@ -1,19 +1,24 @@
 # https://github.com/GrantBirki/dotfiles
 
-# This key is specific to my MacBook Air
-
 [core]
 	autocrlf = false
+	sshCommand = ~/.local/bin/git-secretive-ssh
 [user]
 	email = grant.birkinbine@gmail.com
 	name = GrantBirki
-	signingkey = 9C0C622D9DEC4A08
+	signingkey = ~/.config/git/secretive_git_key.pub
 [gpg]
-	program = /opt/homebrew/bin/gpg
+	format = ssh
+[gpg "ssh"]
+	program = git-secretive-ssh-keygen
+	allowedSignersFile = ~/.config/git/allowed_signers
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [commit]
 	gpgSign = true
+[tag]
+	gpgSign = true
+	forceSignAnnotated = true
 [pull]
 	rebase = false
 [sequence]
