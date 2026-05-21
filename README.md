@@ -25,7 +25,7 @@ script/doctor
 
 ## What It Manages
 
-- Bash, Git, Ruby, profile, and alias files
+- Bash, Git, Ruby, profile, alias files, and Secretive-backed Git SSH helpers
 - Alacritty and Karabiner-Elements config
 - VS Code settings, keybindings, tasks, snippets, extensions, and policy
 

@@ -83,6 +83,10 @@ validate_vscode_fixture_plan() {
     "$ROOT/script/test-check" vscode-fixture-plan "$fixture_plan"
 }
 
+validate_git_secretive_policy() {
+    "$ROOT/script/test-check" git-secretive-policy "$ROOT"
+}
+
 validate_public_safety() {
     "$ROOT/script/test-check" public-safety "$ROOT"
 }
@@ -114,6 +118,7 @@ ruby -c "$ROOT/script/vsc-extension-bulk-install" >/dev/null
 "$ROOT/script/vscode" plan >/dev/null
 "$ROOT/script/vsc-extension-bulk-install" --dry-run >/dev/null
 validate_vscode_fixture_plan
+validate_git_secretive_policy
 validate_public_safety
 validate_bundler_supply_chain
 validate_ci_workflow_action_pins
@@ -132,6 +137,10 @@ shell_files=(
 while IFS= read -r shell_file; do
     shell_files+=("$shell_file")
 done < <(find shell -type f -name '*.bash' -print | sort)
+
+while IFS= read -r shell_file; do
+    shell_files+=("$shell_file")
+done < <(find local-bin -type f -print | sort)
 
 for shell_file in "${shell_files[@]}"; do
     bash -n "$shell_file"

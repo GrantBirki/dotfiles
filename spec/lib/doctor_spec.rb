@@ -33,7 +33,33 @@ RSpec.describe Dotfiles::Doctor do
     instance_double(Dotfiles::VSCode::Manager, validate!: true, doctor_actions: actions)
   end
 
-  def run_doctor(entries:, manager: vscode_manager, state_dir: nil)
+  def successful_status
+    instance_double(Process::Status, success?: true)
+  end
+
+  def failed_status
+    instance_double(Process::Status, success?: false)
+  end
+
+  def secretive_socket_path
+    File.join(@home, "Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh")
+  end
+
+  def git_signing_key_path
+    File.join(@home, ".config/git/secretive_git_key.pub")
+  end
+
+  def git_allowed_signers_path
+    File.join(@home, ".config/git/allowed_signers")
+  end
+
+  def prepare_secretive_git(key: "ssh-ed25519 AAAATEST git")
+    FileUtils.mkdir_p(File.dirname(git_signing_key_path))
+    File.write(git_signing_key_path, "#{key}\n")
+    File.write(git_allowed_signers_path, "grant.birkinbine@gmail.com #{key}\n")
+  end
+
+  def run_doctor(entries:, manager: vscode_manager, state_dir: nil, secretive_socket_checker: nil)
     stdout = StringIO.new
     stderr = StringIO.new
     doctor = described_class.new(
@@ -43,6 +69,7 @@ RSpec.describe Dotfiles::Doctor do
       manifest: manifest(entries),
       vscode_manager: manager,
       state_dir: state_dir || File.join(@home, "state"),
+      secretive_socket_checker: secretive_socket_checker,
       color: false
     )
     allow(Dotfiles::Runtime).to receive(:command?).and_return(true)
@@ -56,13 +83,18 @@ RSpec.describe Dotfiles::Doctor do
     state_dir = File.join(@home, "state")
     FileUtils.mkdir_p(state_dir)
     File.write(File.join(state_dir, "install-20260517120000.tsv"), "")
+    prepare_secretive_git
+    allow(Open3).to receive(:capture3)
+      .with({ "SSH_AUTH_SOCK" => secretive_socket_path }, "ssh-add", "-L")
+      .and_return(["ssh-ed25519 AAAATEST git\n", "", successful_status])
 
-    status, stdout, stderr = run_doctor(entries: [entry], state_dir: state_dir)
+    status, stdout, stderr = run_doctor(entries: [entry], state_dir: state_dir, secretive_socket_checker: ->(path) { path == secretive_socket_path })
 
     expect(status).to eq(0)
     expect(stderr).to eq("")
-    expect(stdout).to include("Commands: 4/4 required, 6/6 optional available")
+    expect(stdout).to include("Commands: 4/4 required, 7/7 optional available")
     expect(stdout).to include("Managed files: 1 OK", "VS Code: manifests valid and desired state converged")
+    expect(stdout).to include("Secretive socket:", "Git signing key:", "Git allowed signers:", "Secretive agent exposes Git signing key")
   end
 
   it "handles CLI help, production, and unknown options" do
@@ -193,5 +225,48 @@ RSpec.describe Dotfiles::Doctor do
 
     expect(status).to eq(1)
     expect(stderr).to include("VS Code manifest validation failed", "bad vscode")
+  end
+
+  it "warns when Secretive local files are missing" do
+    status, _stdout, stderr = run_doctor(entries: [])
+
+    expect(status).to eq(0)
+    expect(stderr).to include(
+      "Secretive socket is missing",
+      "Git signing key is missing or unreadable",
+      "Git allowed signers is missing or unreadable"
+    )
+  end
+
+  it "warns when Secretive agent keys cannot be queried" do
+    prepare_secretive_git
+    allow(Open3).to receive(:capture3)
+      .with({ "SSH_AUTH_SOCK" => secretive_socket_path }, "ssh-add", "-L")
+      .and_return(["", "agent unavailable\n", failed_status])
+
+    status, _stdout, stderr = run_doctor(entries: [], secretive_socket_checker: ->(path) { path == secretive_socket_path })
+
+    expect(status).to eq(0)
+    expect(stderr).to include("Secretive agent keys could not be queried: agent unavailable")
+  end
+
+  it "warns when the configured key is empty or absent from Secretive" do
+    prepare_secretive_git(key: "# comment only")
+    allow(Open3).to receive(:capture3)
+      .with({ "SSH_AUTH_SOCK" => secretive_socket_path }, "ssh-add", "-L")
+      .and_return(["ssh-ed25519 OTHER key\n", "", successful_status])
+
+    first_status, _first_stdout, first_stderr = run_doctor(entries: [], secretive_socket_checker: ->(path) { path == secretive_socket_path })
+    expect(first_status).to eq(0)
+    expect(first_stderr).to include("Git signing key file does not contain a public SSH key")
+
+    prepare_secretive_git
+    allow(Open3).to receive(:capture3)
+      .with({ "SSH_AUTH_SOCK" => secretive_socket_path }, "ssh-add", "-L")
+      .and_return(["ssh-ed25519 OTHER key\n", "", successful_status])
+
+    second_status, _second_stdout, second_stderr = run_doctor(entries: [], secretive_socket_checker: ->(path) { path == secretive_socket_path })
+    expect(second_status).to eq(0)
+    expect(second_stderr).to include("Secretive agent does not expose the configured Git signing key")
   end
 end

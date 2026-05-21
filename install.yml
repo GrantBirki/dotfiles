@@ -35,6 +35,28 @@ files:
     target: ~/.gitconfig
     mode: symlink
     parent: create
+  - id: git-secretive-ssh
+    source: local-bin/git-secretive-ssh
+    target: ~/.local/bin/git-secretive-ssh
+    mode: symlink
+    parent: create
+  - id: git-secretive-ssh-keygen
+    source: local-bin/git-secretive-ssh-keygen
+    target: ~/.local/bin/git-secretive-ssh-keygen
+    mode: symlink
+    parent: create
+  - id: git-secretive-signing-key
+    source: configs/git/secretive_git_key.pub
+    target: ~/.config/git/secretive_git_key.pub
+    mode: symlink
+    parent: create
+    optional: true
+  - id: git-secretive-allowed-signers
+    source: configs/git/allowed_signers
+    target: ~/.config/git/allowed_signers
+    mode: symlink
+    parent: create
+    optional: true
   - id: karabiner
     source: configs/karabiner/karabiner.json
     target: ~/.config/karabiner/karabiner.json

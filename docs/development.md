@@ -26,8 +26,8 @@ Run:
 script/test
 ```
 
-The test script validates Ruby syntax, shell syntax, structured config, alias metadata, install manifests, VS Code desired state, public-repo safety checks, stale platform paths, and RSpec coverage.
+The test script validates Ruby syntax, shell syntax, structured config, alias metadata, install manifests, VS Code desired state, Secretive-only Git policy, public-repo safety checks, stale platform paths, and RSpec coverage.
 
 ## Public Repo Safety
 
-Do not commit private host overlays, local state, install logs, generated VS Code storage, MCP server definitions, credentials, keys, tokens, employer-specific references, or machine-specific artifacts.
+Do not commit private host overlays, local state, install logs, generated VS Code storage, MCP server definitions, Secretive Git key files, credentials, keys, tokens, employer-specific references, or machine-specific artifacts.

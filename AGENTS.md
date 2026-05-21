@@ -58,6 +58,11 @@ The repo is public. Treat every committed byte as public-facing.
   `apply`, and `doctor` subcommands.
 - `script/vsc-extension-bulk-install`: Compatibility wrapper around
   `script/vscode`.
+- `local-bin/git-secretive-ssh`: Git-only SSH transport wrapper that forces
+  Secretive-backed public-key auth and disables disk-key/password fallbacks.
+- `local-bin/git-secretive-ssh-keygen`: Git SSH signing wrapper that runs
+  `ssh-keygen` with Secretive's agent socket and refuses non-managed signing
+  key files for signing operations.
 - `lib/dotfiles/vscode.rb`: VS Code manifest parser, planner, applier, and
   validation logic.
 - `dotfiles/`: Shell, Git, Ruby, profile, and alias metadata.
@@ -89,6 +94,12 @@ Managed files currently include:
 - `~/.rubocop.yml`
 - `~/.irbrc`
 - `~/.gitconfig`
+- `~/.local/bin/git-secretive-ssh`
+- `~/.local/bin/git-secretive-ssh-keygen`
+- Optionally `~/.config/git/secretive_git_key.pub` when the ignored local
+  source `configs/git/secretive_git_key.pub` exists.
+- Optionally `~/.config/git/allowed_signers` when the ignored local source
+  `configs/git/allowed_signers` exists.
 - `~/.config/karabiner/karabiner.json`
 - `~/.config/alacritty/alacritty.toml`
 - `~/Library/Application Support/Code/User/settings.json`
@@ -242,6 +253,14 @@ Top-level shell modules:
 
 User-facing command-like functions live in `shell/functions/` and are loaded by
 `dotfiles/.bash_aliases`.
+
+`shell/ssh-gpg.bash` must not start `/usr/bin/ssh-agent`. The supported Git
+baseline is Secretive-backed SSH only. Keep any disk-key SSH usage behind the
+explicit `ssh-with-key` helper for one-off non-Git legacy hosts.
+
+`dotfiles/.gitconfig` must keep Git transport and signing on the Secretive
+wrappers. Do not reintroduce classic GPG signing, direct private-key signing, or
+default SSH identity discovery for Git operations.
 
 When adding an alias or user-facing function:
 

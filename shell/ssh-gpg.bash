@@ -1,21 +1,12 @@
 # shellcheck shell=bash
 
-SSH_ENV="$HOME/.ssh/agent-environment"
+SECRETIVE_SSH_AUTH_SOCK="${SECRETIVE_SSH_AUTH_SOCK:-$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh}"
 
-start_agent() {
-  /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-  chmod 600 "${SSH_ENV}"
-  . "${SSH_ENV}" > /dev/null
-}
-
-if [ -f "${SSH_ENV}" ]; then
-  . "${SSH_ENV}" > /dev/null
-  if [ -z "${SSH_AGENT_PID:-}" ] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
-    start_agent
-  fi
-else
-  start_agent
+if [ -S "$SECRETIVE_SSH_AUTH_SOCK" ]; then
+  export SSH_AUTH_SOCK="$SECRETIVE_SSH_AUTH_SOCK"
 fi
 
-export GPG_TTY
-GPG_TTY=$(tty)
+if _dotfiles_tty="$(tty 2>/dev/null)"; then
+  export GPG_TTY="$_dotfiles_tty"
+fi
+unset _dotfiles_tty

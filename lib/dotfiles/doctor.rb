@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 require_relative "manifest"
 require_relative "runtime"
 require_relative "vscode"
@@ -7,8 +9,11 @@ require_relative "vscode"
 module Dotfiles
   class Doctor
     REQUIRED_COMMANDS = %w[bash ruby bundle rg].freeze
-    OPTIONAL_COMMANDS = %w[brew code eza git gpg sqlite3].freeze
+    OPTIONAL_COMMANDS = %w[brew code eza git gpg ssh-add sqlite3].freeze
     TERMINAL_VSCODE_ACTIONS = %w[keep keep_auto_update warn].freeze
+    SECRETIVE_SOCKET_TARGET = "~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
+    GIT_SIGNING_KEY_TARGET = "~/.config/git/secretive_git_key.pub"
+    GIT_ALLOWED_SIGNERS_TARGET = "~/.config/git/allowed_signers"
 
     attr_reader :argv, :out, :err, :color
 
@@ -19,6 +24,10 @@ module Dotfiles
       manifest: nil,
       vscode_manager: nil,
       state_dir: File.join(ROOT, ".dotfiles/state"),
+      secretive_socket_path: nil,
+      git_signing_key_path: nil,
+      git_allowed_signers_path: nil,
+      secretive_socket_checker: nil,
       color: true
     )
       @argv = argv.dup
@@ -27,6 +36,10 @@ module Dotfiles
       @manifest = manifest
       @vscode_manager = vscode_manager
       @state_dir = state_dir
+      @secretive_socket_path = secretive_socket_path || expand_home(SECRETIVE_SOCKET_TARGET)
+      @git_signing_key_path = git_signing_key_path || expand_home(GIT_SIGNING_KEY_TARGET)
+      @git_allowed_signers_path = git_allowed_signers_path || expand_home(GIT_ALLOWED_SIGNERS_TARGET)
+      @secretive_socket_checker = secretive_socket_checker || ->(path) { File.socket?(path) }
       @color = color
       @issues = 0
       @warnings = 0
@@ -45,6 +58,7 @@ module Dotfiles
       check_commands
       check_manifest
       check_vscode
+      check_git_secretive
       check_latest_state
       print_summary
       @issues.zero? ? 0 : 1
@@ -167,6 +181,65 @@ module Dotfiles
       issue e.message
     end
 
+    def check_git_secretive
+      section "🔐 Secretive Git SSH"
+      socket_ok = check_secretive_socket
+      key_ok = check_secretive_file("Git signing key", @git_signing_key_path)
+      check_secretive_file("Git allowed signers", @git_allowed_signers_path)
+      check_secretive_agent_key if socket_ok && key_ok
+    end
+
+    def check_secretive_socket
+      if @secretive_socket_checker.call(@secretive_socket_path)
+        success "Secretive socket: #{value(@secretive_socket_path)}"
+        true
+      else
+        warn "Secretive socket is missing: #{@secretive_socket_path}"
+        false
+      end
+    end
+
+    def check_secretive_file(label, path)
+      if File.readable?(path)
+        success "#{label}: #{value(path)}"
+        true
+      else
+        warn "#{label} is missing or unreadable: #{path}"
+        false
+      end
+    end
+
+    def check_secretive_agent_key
+      ok, stdout, stderr = secretive_agent_public_keys
+      unless ok
+        warn "Secretive agent keys could not be queried: #{first_error_line(stderr)}"
+        return
+      end
+
+      key_body = public_key_body(File.readlines(@git_signing_key_path).find { |line| !line.strip.empty? && !line.start_with?("#") })
+      if key_body.empty?
+        warn "Git signing key file does not contain a public SSH key: #{@git_signing_key_path}"
+      elsif stdout.lines.any? { |line| public_key_body(line) == key_body }
+        success "Secretive agent exposes Git signing key"
+      else
+        warn "Secretive agent does not expose the configured Git signing key"
+      end
+    end
+
+    def secretive_agent_public_keys
+      stdout, stderr, status = Open3.capture3({ "SSH_AUTH_SOCK" => @secretive_socket_path }, "ssh-add", "-L")
+      [status.success?, stdout, stderr]
+    end
+
+    def public_key_body(line)
+      line.to_s.strip.split(/\s+/).first(2).join(" ")
+    end
+
+    def first_error_line(stderr)
+      line = stderr.to_s.lines.first.to_s.strip
+      line.empty? ? "ssh-add -L failed" : line
+    end
+
     def check_latest_state
       @latest_state = Dir[File.join(@state_dir, "install-*.tsv")].sort.last
       warn "no install state found under #{@state_dir}" unless @latest_state
@@ -228,6 +301,10 @@ module Dotfiles
 
     def warn_value(text)
       Runtime.warn_value(text, color: color)
+    end
+
+    def expand_home(path)
+      path.sub(/\A~(?=\/|\z)/, ENV.fetch("HOME"))
     end
   end
 end

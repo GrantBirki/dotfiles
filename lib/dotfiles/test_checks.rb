@@ -292,9 +292,117 @@ module Dotfiles
       end
     end
 
+    module GitSecretivePolicy
+      module_function
+
+      EXPECTED_VALUES = {
+        "core.sshcommand" => "~/.local/bin/git-secretive-ssh",
+        "gpg.format" => "ssh",
+        "gpg.ssh.program" => "git-secretive-ssh-keygen",
+        "gpg.ssh.allowedsignersfile" => "~/.config/git/allowed_signers",
+        "user.signingkey" => "~/.config/git/secretive_git_key.pub"
+      }.freeze
+      REQUIRED_TRUE_VALUES = %w[commit.gpgsign tag.gpgsign tag.forcesignannotated].freeze
+      CLASSIC_GPG_KEYS = %w[gpg.program gpg.openpgp.program].freeze
+      PRIVATE_KEY_PATH_PATTERN = %r{(^|/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\z|[._-])}.freeze
+
+      def validate(root)
+        config_path = File.join(root, "dotfiles/.gitconfig")
+        config = read_git_config(config_path)
+        failures = []
+        failures.concat(expected_value_failures(config))
+        failures.concat(required_true_failures(config))
+        failures.concat(classic_gpg_failures(config))
+        failures.concat(signing_key_failures(config))
+        raise Error, failures.join("\n") unless failures.empty?
+
+        true
+      rescue Errno::ENOENT
+        raise Error, "dotfiles/.gitconfig not found"
+      end
+
+      def expected_value_failures(config)
+        EXPECTED_VALUES.each_with_object([]) do |(key, expected), failures|
+          actual = value_for(config, key)
+          next if actual == expected
+
+          failures << "dotfiles/.gitconfig must set #{key}=#{expected}; got #{actual.inspect}"
+        end
+      end
+
+      def required_true_failures(config)
+        REQUIRED_TRUE_VALUES.each_with_object([]) do |key, failures|
+          next if truthy?(value_for(config, key))
+
+          failures << "dotfiles/.gitconfig must enable #{key}"
+        end
+      end
+
+      def classic_gpg_failures(config)
+        CLASSIC_GPG_KEYS.each_with_object([]) do |key, failures|
+          next unless config.key?(key)
+
+          failures << "dotfiles/.gitconfig must not set classic GPG signing key #{key}"
+        end
+      end
+
+      def signing_key_failures(config)
+        signing_key = value_for(config, "user.signingkey")
+        return [] unless private_key_path?(signing_key)
+
+        ["dotfiles/.gitconfig user.signingkey must not point at a private SSH key path"]
+      end
+
+      def private_key_path?(value)
+        return false if value.nil? || value.end_with?(".pub") || value.start_with?("key::") || value.start_with?("ssh-")
+
+        value.match?(PRIVATE_KEY_PATH_PATTERN) || value.downcase.include?("private")
+      end
+
+      def truthy?(value)
+        %w[true yes on 1].include?(value.to_s.downcase)
+      end
+
+      def value_for(config, key)
+        config.fetch(key, []).last
+      end
+
+      def read_git_config(path)
+        current_section = nil
+        values = Hash.new { |hash, key| hash[key] = [] }
+        File.readlines(path).each do |line|
+          stripped = line.strip
+          next if stripped.empty? || stripped.start_with?("#", ";")
+
+          section = stripped.match(/\A\[(?<name>[^\]]+)\]\z/)
+          if section
+            current_section = normalize_section(section[:name])
+            next
+          end
+
+          entry = stripped.match(/\A(?<key>[A-Za-z0-9_.-]+)\s*=\s*(?<value>.*?)\s*\z/)
+          next unless current_section && entry
+
+          values["#{current_section}.#{entry[:key].downcase}"] << entry[:value]
+        end
+        values
+      end
+
+      def normalize_section(name)
+        match = name.match(/\A(?<section>[A-Za-z0-9_.-]+)\s+"(?<subsection>.*)"\z/)
+        return "#{match[:section]}.#{match[:subsection]}".downcase if match
+
+        name.downcase
+      end
+    end
+
     module PublicSafety
       module_function
 
+      LOCAL_GIT_KEY_PATHS = %w[
+        configs/git/secretive_git_key.pub
+        configs/git/allowed_signers
+      ].freeze
       SECRET_PATTERNS = [
         /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
         /AKIA[0-9A-Z]{16}/,
@@ -308,6 +416,7 @@ module Dotfiles
         tracked_files ||= git_tracked_files(root)
         failures = []
         failures.concat(blocked_vscode_paths(tracked_files))
+        failures.concat(blocked_git_key_paths(tracked_files))
         failures.concat(sensitive_generated_paths(tracked_files))
         failures.concat(secret_pattern_failures(root, tracked_files))
         raise Error, failures.join("\n") unless failures.empty?
@@ -326,6 +435,12 @@ module Dotfiles
         tracked_files
           .grep(%r{\Aconfigs/vsc/(?!extensions\.yml\z|keybindings\.json\z|policy\.yml\z|settings\.json\z|tasks\.json\z|snippets/)})
           .map { |path| "unexpected tracked VS Code config surface: #{path}" }
+      end
+
+      def blocked_git_key_paths(tracked_files)
+        tracked_files
+          .select { |path| LOCAL_GIT_KEY_PATHS.include?(path) }
+          .map { |path| "local Secretive Git key material must not be tracked: #{path}" }
       end
 
       def sensitive_generated_paths(tracked_files)
@@ -375,6 +490,9 @@ module Dotfiles
         when "vscode-fixture-plan"
           require_args!(1)
           VSCodeFixturePlan.validate(argv.fetch(0))
+        when "git-secretive-policy"
+          require_args!(1)
+          GitSecretivePolicy.validate(argv.fetch(0))
         when "public-safety"
           require_args!(1)
           PublicSafety.validate(argv.fetch(0))
@@ -408,6 +526,7 @@ module Dotfiles
             bundler-supply-chain <repo-root>
             ci-workflow-action-pins <repo-root>
             vscode-fixture-plan <plan-json>
+            git-secretive-policy <repo-root>
             public-safety <repo-root>
         USAGE
       end

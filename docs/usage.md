@@ -42,6 +42,10 @@ The manifest currently manages:
 - `~/.rubocop.yml`
 - `~/.irbrc`
 - `~/.gitconfig`
+- `~/.local/bin/git-secretive-ssh`
+- `~/.local/bin/git-secretive-ssh-keygen`
+- optionally `~/.config/git/secretive_git_key.pub` when the ignored local source exists
+- optionally `~/.config/git/allowed_signers` when the ignored local source exists
 - `~/.config/karabiner/karabiner.json`
 - `~/.config/alacritty/alacritty.toml`
 - `~/Library/Application Support/Code/User/settings.json`
@@ -50,6 +54,27 @@ The manifest currently manages:
 - `~/Library/Application Support/Code/User/snippets`
 
 Karabiner is copied instead of symlinked because Karabiner rewrites its live config. The manifest uses a Karabiner-aware comparison that ignores runtime-managed fields.
+
+## Git SSH
+
+Git is configured to use Secretive-backed SSH for fetch, push, commit signing, and tag signing. The managed Git config points all Git SSH transport through `~/.local/bin/git-secretive-ssh` and all Git SSH signing through `~/.local/bin/git-secretive-ssh-keygen`.
+
+The local public signing key and allowed signers file are intentionally ignored:
+
+```text
+configs/git/secretive_git_key.pub
+configs/git/allowed_signers
+```
+
+When those files exist locally, `script/install` symlinks them into `~/.config/git/`. Do not commit them to this public repo.
+
+Normal shells use Secretive's SSH agent socket when it is available and do not start Apple's `ssh-agent`. For old non-Git hosts that still require a disk private key, use the explicit one-off helper:
+
+```bash
+ssh-with-key ~/.ssh/legacy_key user@example.com
+```
+
+That helper clears `SSH_AUTH_SOCK` for the one command and does not add the disk key to an agent.
 
 ## Restore
 

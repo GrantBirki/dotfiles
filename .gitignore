@@ -11,3 +11,5 @@ coverage/
 .idea/
 .vscode/
 configs/vsc/mcp.json
+configs/git/secretive_git_key.pub
+configs/git/allowed_signers
