@@ -136,4 +136,43 @@ RSpec.describe "Secretive Git wrappers" do
     end
     expect(File).not_to exist(capture_path)
   end
+
+  it "delegates Git SSH verification without requiring Secretive" do
+    root = Dir.mktmpdir
+    capture_path = File.join(root, "ssh-keygen-verify-capture.txt")
+    fake_ssh_keygen = File.join(root, "fake-ssh-keygen")
+    allowed_signers = File.join(root, "allowed_signers")
+    File.write(allowed_signers, "grant.birkinbine@gmail.com ssh-ed25519 AAAATEST git\n")
+    write_executable(fake_ssh_keygen, <<~BASH)
+      #!/usr/bin/env bash
+      {
+        printf 'SSH_AUTH_SOCK=%s\\n' "${SSH_AUTH_SOCK:-}"
+        printf 'arg=%s\\n' "$@"
+      } > "$CAPTURE_PATH"
+    BASH
+
+    _stdout, stderr, status = Open3.capture3(
+      {
+        "HOME" => root,
+        "SSH_AUTH_SOCK" => nil,
+        "SECRETIVE_SSH_AUTH_SOCK" => File.join(root, "missing-secretive.sock"),
+        "GIT_SECRETIVE_SSH_KEYGEN_BIN" => fake_ssh_keygen,
+        "CAPTURE_PATH" => capture_path
+      },
+      File.join(ROOT, "local-bin/git-secretive-ssh-keygen"),
+      "-Y",
+      "verify",
+      "-f",
+      allowed_signers,
+      "-I",
+      "grant.birkinbine@gmail.com",
+      "-n",
+      "git",
+      "-s",
+      File.join(root, "payload.sig")
+    )
+
+    expect(status).to be_success, stderr
+    expect(File.read(capture_path)).to include("SSH_AUTH_SOCK=\n", "arg=-Y", "arg=verify", "arg=#{allowed_signers}")
+  end
 end
