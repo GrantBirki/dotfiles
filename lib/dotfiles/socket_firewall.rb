@@ -14,8 +14,7 @@ module Dotfiles
       { label: "yarn v2+", command: %w[yarn cache clean --mirror] },
       { label: "pnpm", command: %w[pnpm store prune] },
       { label: "pip", command: %w[pip cache purge] },
-      { label: "uv", command: %w[uv cache clean] },
-      { label: "cargo", command: %w[cargo clean gc] }
+      { label: "uv", command: %w[uv cache clean] }
     ].freeze
     DEFAULT_RUNNER = ->(env, *command, chdir:) { system(env, *command, chdir: chdir) }
 
@@ -175,6 +174,7 @@ module Dotfiles
           out.puts "skipping #{entry.fetch(:label)} cache clean; command not found: #{command.first}"
         end
       end
+      out.puts "clearing cargo registry and git caches"
       run_command({}, ["rm", "-fr", File.join(cargo_home, "registry"), File.join(cargo_home, "git")])
       0
     end

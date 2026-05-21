@@ -142,6 +142,7 @@ RSpec.describe Dotfiles::SocketFirewall do
   it "cleans package-manager caches with SFW disabled" do
     Dir.mktmpdir do |dir|
       executable(dir, "npm")
+      executable(dir, "cargo")
       firewall = build(argv: ["cache-clean", "--dry-run"], env: { "PATH" => dir, "CARGO_HOME" => File.join(dir, "cargo") })
 
       expect(firewall.run).to eq(0)
@@ -149,8 +150,10 @@ RSpec.describe Dotfiles::SocketFirewall do
         "Socket Firewall cache clean",
         "would run: DOTFILES_SFW_DISABLE=1 npm cache clean --force",
         "skipping yarn v1 cache clean; command not found: yarn",
+        "clearing cargo registry and git caches",
         "would run: rm -fr #{File.join(dir, "cargo/registry")} #{File.join(dir, "cargo/git")}"
       )
+      expect(firewall.out.string).not_to include("cargo clean gc")
     end
   end
 
