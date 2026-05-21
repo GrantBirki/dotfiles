@@ -194,7 +194,19 @@ module Dotfiles
     end
 
     def cargo_home
-      env.fetch("CARGO_HOME", File.join(home, ".cargo"))
+      configured = env.fetch("CARGO_HOME", "").to_s
+      candidate = configured.empty? ? File.join(home, ".cargo") : configured
+
+      unless candidate.start_with?(File::SEPARATOR)
+        raise Error, "refusing to clear cargo cache with non-absolute CARGO_HOME: #{candidate}"
+      end
+
+      expanded = File.expand_path(candidate)
+      if expanded == File::SEPARATOR
+        raise Error, "refusing to clear cargo cache with unsafe CARGO_HOME: #{expanded}"
+      end
+
+      expanded
     end
 
     def run_command(command_env, command)

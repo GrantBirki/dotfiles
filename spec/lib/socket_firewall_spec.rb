@@ -157,6 +157,24 @@ RSpec.describe Dotfiles::SocketFirewall do
     end
   end
 
+  it "uses the default cargo home when CARGO_HOME is empty" do
+    firewall = build(argv: ["cache-clean", "--dry-run"], env: { "PATH" => "", "CARGO_HOME" => "" })
+
+    expect(firewall.run).to eq(0)
+    expect(firewall.out.string).to include("would run: rm -fr /home/user/.cargo/registry /home/user/.cargo/git")
+  end
+
+  it "refuses unsafe cargo cache paths" do
+    relative = build(argv: ["cache-clean"], env: { "PATH" => "", "CARGO_HOME" => "cargo-cache" })
+    root = build(argv: ["cache-clean"], env: { "PATH" => "", "CARGO_HOME" => "/" })
+
+    expect(relative.run).to eq(1)
+    expect(relative.err.string).to eq("refusing to clear cargo cache with non-absolute CARGO_HOME: cargo-cache\n")
+
+    expect(root.run).to eq(1)
+    expect(root.err.string).to eq("refusing to clear cargo cache with unsafe CARGO_HOME: /\n")
+  end
+
   it "prints usage for help" do
     firewall = build(argv: ["--help"])
 
