@@ -58,7 +58,7 @@ _dotfiles_sfw_exec() {
         return 127
     fi
 
-    DOTFILES_SFW_ACTIVE=1 PATH="$clean_path" command sfw "$cmd" "$@"
+    PATH="$clean_path" command sfw "$cmd" "$@"
 }
 
 sfw_status() {

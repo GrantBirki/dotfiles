@@ -6,9 +6,23 @@ IFS=$'\n\t'
 export DOTFILES_SFW_SHIM_DIR="${DOTFILES_SFW_SHIM_DIR:-$HOME/.local/share/dotfiles/sfw-shims}"
 export DOTFILES_SFW_REQUIRE="${DOTFILES_SFW_REQUIRE:-1}"
 
-case ":$PATH:" in
-    *":$DOTFILES_SFW_SHIM_DIR:"*) ;;
-    *) export PATH="$DOTFILES_SFW_SHIM_DIR:$PATH" ;;
-esac
+_codex_sfw_prepend_path() {
+    local dir="$1"
+
+    [ -d "$dir" ] || return 0
+
+    case ":$PATH:" in
+        *":$dir:"*) ;;
+        *) export PATH="$dir:$PATH" ;;
+    esac
+}
+
+_codex_sfw_prepend_path "$HOME/.local/bin"
+_codex_sfw_prepend_path "$HOME/bin"
+_codex_sfw_prepend_path "$HOME/.cargo/bin"
+_codex_sfw_prepend_path "$HOME/.pyenv/shims"
+_codex_sfw_prepend_path "$HOME/.nodenv/shims"
+_codex_sfw_prepend_path "$DOTFILES_SFW_SHIM_DIR"
+unset -f _codex_sfw_prepend_path
 
 exec codex "$@"

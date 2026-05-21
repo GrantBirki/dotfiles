@@ -353,9 +353,16 @@ the protected shim directory is present in `PATH`.
 
 Do not use bare `npx`, `uvx`, `pipx`, `poetry install`, `bun install`,
 `gem install`, `bundle install`, `go get`, `mvn`, `gradle`, or `dotnet restore`
-as if Socket Firewall Free protects them. They are not part of this repo's SFW
-Free wrapper surface unless current Socket documentation is checked and this
-repo is deliberately updated.
+as if Socket Firewall Free protects them. Also avoid treating `pnpx`,
+`pip3 install`, `python -m pip install`, `corepack`, and `bunx` as protected
+forms. They are not part of this repo's SFW Free wrapper surface unless current
+Socket documentation is checked and this repo is deliberately updated.
+
+Prefer `sfw npm exec <package> -- <args>` instead of `npx`. Prefer
+`sfw pip install ...` instead of `python -m pip install ...` or
+`pip3 install ...`. Prefer `sfw uv pip install ...` for uv-managed pip installs.
+Only use `pnpm dlx` through SFW after confirming the exact SFW behavior for that
+subcommand.
 
 Only bypass SFW with `DOTFILES_SFW_DISABLE=1` when the repository owner
 explicitly asks for a bypass.

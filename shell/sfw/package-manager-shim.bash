@@ -41,11 +41,10 @@ if [ "$cmd" = "sfw" ]; then
         exit 127
     fi
 
-    export DOTFILES_SFW_ACTIVE=1
     exec sfw "$@"
 fi
 
-if [ "${DOTFILES_SFW_DISABLE:-0}" = "1" ] || [ "${DOTFILES_SFW_ACTIVE:-0}" = "1" ]; then
+if [ "${DOTFILES_SFW_DISABLE:-0}" = "1" ]; then
     exec "$cmd" "$@"
 fi
 
@@ -65,5 +64,4 @@ if ! command -v "$cmd" >/dev/null 2>&1; then
     exit 127
 fi
 
-export DOTFILES_SFW_ACTIVE=1
 exec sfw "$cmd" "$@"
