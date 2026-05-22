@@ -100,9 +100,14 @@ module Dotfiles
       end
 
       errors << "#{id}: source must be repo-relative" if source.start_with?("/", "~")
+      errors << "#{id}: source must not contain .. segments" if path_has_parent_traversal?(source)
       errors << "#{id}: optional must be true or false" unless BOOLEAN_VALUES.include?(optional)
       errors << "#{id}: source does not exist: #{source}" if !optional && !File.exist?(source_path)
       errors << "#{id}: target must start with ~/; got #{target}" unless target.start_with?("~/")
+      errors << "#{id}: target must not contain .. segments" if path_has_parent_traversal?(target.delete_prefix("~/"))
+      errors << "#{id}: source must stay within repo root" unless within_root?(source_path, ROOT)
+      errors << "#{id}: target must stay within HOME" unless within_root?(target_path, ENV.fetch("HOME"))
+      errors << "#{id}: backup must stay within HOME/dotfiles_old" unless within_root?(backup_path, File.join(ENV.fetch("HOME"), "dotfiles_old"))
       errors << "#{id}: unsupported mode #{mode}" unless VALID_MODES.include?(mode)
       errors << "#{id}: unsupported parent policy #{parent}" unless VALID_PARENT_POLICIES.include?(parent)
       errors << "#{id}: unsupported compare strategy #{compare}" unless VALID_COMPARE_STRATEGIES.include?(compare)
@@ -110,7 +115,7 @@ module Dotfiles
     end
 
     def source_path
-      File.join(ROOT, source)
+      canonical_join(ROOT, source)
     end
 
     def active?
@@ -136,7 +141,7 @@ module Dotfiles
 
     def backup_path
       relative_target = target.delete_prefix("~/")
-      File.join(ENV.fetch("HOME"), "dotfiles_old", relative_target)
+      canonical_join(File.join(ENV.fetch("HOME"), "dotfiles_old"), relative_target)
     end
 
     def target_parent
@@ -163,7 +168,21 @@ module Dotfiles
     private
 
     def expand_home(path)
-      path.sub(/\A~(?=\/|\z)/, ENV.fetch("HOME"))
+      canonical_join(ENV.fetch("HOME"), path.delete_prefix("~/"))
+    end
+
+    def canonical_join(base, relative)
+      File.expand_path(relative.to_s, base)
+    end
+
+    def path_has_parent_traversal?(path)
+      path.split("/").include?("..")
+    end
+
+    def within_root?(path, root)
+      candidate = File.expand_path(path)
+      root_path = File.expand_path(root)
+      candidate == root_path || candidate.start_with?("#{root_path}/")
     end
 
     def normalized_karabiner(path)

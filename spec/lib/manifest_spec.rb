@@ -245,6 +245,37 @@ RSpec.describe Dotfiles::Entry do
     expect(entry.validate(index: 0)).to include("tilde: source must be repo-relative")
   end
 
+  it "rejects source traversal and escaping repository root" do
+    entry = described_class.new(
+      "id" => "escape-source",
+      "source" => "../README.md",
+      "target" => "~/.config/readme",
+      "mode" => "symlink",
+      "parent" => "create"
+    )
+
+    expect(entry.validate(index: 0)).to include(
+      "escape-source: source must not contain .. segments",
+      "escape-source: source must stay within repo root"
+    )
+  end
+
+  it "rejects target traversal and escaping HOME" do
+    entry = described_class.new(
+      "id" => "escape-target",
+      "source" => "README.md",
+      "target" => "~/../escape",
+      "mode" => "symlink",
+      "parent" => "create"
+    )
+
+    expect(entry.validate(index: 0)).to include(
+      "escape-target: target must not contain .. segments",
+      "escape-target: target must stay within HOME",
+      "escape-target: backup must stay within HOME/dotfiles_old"
+    )
+  end
+
   it "expands paths and serializes install metadata" do
     entry = described_class.new(
       "id" => "readme",
