@@ -172,7 +172,9 @@ module Dotfiles
     end
 
     def canonical_join(base, relative)
-      File.expand_path(relative.to_s, base)
+      relative_path = relative.to_s
+      relative_path = "./#{relative_path}" if relative_path.start_with?("~")
+      File.expand_path(relative_path, base)
     end
 
     def path_has_parent_traversal?(path)

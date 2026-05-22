@@ -245,6 +245,37 @@ RSpec.describe Dotfiles::Entry do
     expect(entry.validate(index: 0)).to include("tilde: source must be repo-relative")
   end
 
+  it "reports invalid tilde-user paths without raising" do
+    source_entry = described_class.new(
+      "id" => "bad-tilde-source",
+      "source" => "~missing-dotfiles-user/secret",
+      "target" => "~/.secret",
+      "mode" => "symlink",
+      "parent" => "create",
+      "optional" => true
+    )
+    source_errors = nil
+
+    expect do
+      source_errors = source_entry.validate(index: 0)
+    end.not_to raise_error
+    expect(source_errors).to include("bad-tilde-source: source must be repo-relative")
+
+    target_entry = described_class.new(
+      "id" => "bad-tilde-target",
+      "source" => "README.md",
+      "target" => "~missing-dotfiles-user/secret",
+      "mode" => "symlink",
+      "parent" => "create"
+    )
+    target_errors = nil
+
+    expect do
+      target_errors = target_entry.validate(index: 0)
+    end.not_to raise_error
+    expect(target_errors).to include("bad-tilde-target: target must start with ~/; got ~missing-dotfiles-user/secret")
+  end
+
   it "rejects source traversal and escaping repository root" do
     entry = described_class.new(
       "id" => "escape-source",
