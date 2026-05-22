@@ -30,9 +30,15 @@ alias cdc='cd ~/code'
 alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 alias ss='set_secret'
 alias gp='git pull'
+alias npm='_dotfiles_sfw_exec npm'
+alias yarn='_dotfiles_sfw_exec yarn'
+alias pnpm='_dotfiles_sfw_exec pnpm'
+alias pip='_dotfiles_sfw_exec pip'
+alias uv='_dotfiles_sfw_exec uv'
+alias cargo='_dotfiles_sfw_exec cargo'
 
 # User-facing bash functions that should always exist in .aliases.yml.
-ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh ssh-with-key set_secret aliases_help aliases)
+ALIASES_TRACKED_FUNCTIONS=(h gbr gcm dockernuke pg ssh ssh-with-key set_secret aliases_help aliases sfw_status)
 
 for _dotfiles_function_module in \
     history \
@@ -41,6 +47,7 @@ for _dotfiles_function_module in \
     docker \
     process \
     ssh \
+    socket-firewall \
     alias-help
 do
     source "$DOTFILES_ROOT/shell/functions/${_dotfiles_function_module}.bash"

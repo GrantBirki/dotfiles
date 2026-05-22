@@ -45,6 +45,46 @@ files:
     target: ~/.local/bin/git-secretive-ssh-keygen
     mode: symlink
     parent: create
+  - id: codex-sfw
+    source: local-bin/codex-sfw
+    target: ~/.local/bin/codex-sfw
+    mode: symlink
+    parent: create
+  - id: sfw-shim-sfw
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/sfw
+    mode: symlink
+    parent: create
+  - id: sfw-shim-npm
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/npm
+    mode: symlink
+    parent: create
+  - id: sfw-shim-yarn
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/yarn
+    mode: symlink
+    parent: create
+  - id: sfw-shim-pnpm
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/pnpm
+    mode: symlink
+    parent: create
+  - id: sfw-shim-pip
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/pip
+    mode: symlink
+    parent: create
+  - id: sfw-shim-uv
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/uv
+    mode: symlink
+    parent: create
+  - id: sfw-shim-cargo
+    source: shell/sfw/package-manager-shim.bash
+    target: ~/.local/share/dotfiles/sfw-shims/cargo
+    mode: symlink
+    parent: create
   - id: git-secretive-signing-key
     source: configs/git/secretive_git_key.pub
     target: ~/.config/git/secretive_git_key.pub

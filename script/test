@@ -102,6 +102,7 @@ ruby -c "$ROOT/lib/dotfiles/vscode.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/runtime.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/installer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/restorer.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/socket_firewall.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/doctor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/vendor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/test_checks.rb" >/dev/null
@@ -111,6 +112,7 @@ ruby -c "$ROOT/script/vscode" >/dev/null
 ruby -c "$ROOT/script/install" >/dev/null
 ruby -c "$ROOT/script/restore" >/dev/null
 ruby -c "$ROOT/script/doctor" >/dev/null
+ruby -c "$ROOT/script/socket-firewall" >/dev/null
 ruby -c "$ROOT/script/vendor" >/dev/null
 ruby -c "$ROOT/script/test-check" >/dev/null
 ruby -c "$ROOT/script/vsc-extension-bulk-install" >/dev/null
