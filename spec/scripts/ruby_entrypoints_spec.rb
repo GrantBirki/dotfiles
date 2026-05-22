@@ -4,6 +4,7 @@ require "spec_helper"
 require_relative "../../lib/dotfiles/doctor"
 require_relative "../../lib/dotfiles/installer"
 require_relative "../../lib/dotfiles/restorer"
+require_relative "../../lib/dotfiles/socket_firewall"
 require_relative "../../lib/dotfiles/test_checks"
 require_relative "../../lib/dotfiles/vendor"
 require_relative "../../lib/dotfiles/vsc_extension_wrapper"
@@ -43,6 +44,15 @@ RSpec.describe "Ruby script entrypoints" do
     result = run_script(File.join(ROOT, "script/vendor"), ["--dry-run"])
 
     expect(result).to include(status: 4)
+  end
+
+  it "runs script/socket-firewall through Dotfiles::SocketFirewall" do
+    runner = instance_double(Dotfiles::SocketFirewall, run: 6)
+    expect(Dotfiles::SocketFirewall).to receive(:new).with(argv: ["status"]).and_return(runner)
+
+    result = run_script(File.join(ROOT, "script/socket-firewall"), ["status"])
+
+    expect(result).to include(status: 6)
   end
 
   it "runs script/test-check through Dotfiles::TestChecks::CLI" do
