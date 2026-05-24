@@ -3,17 +3,8 @@
 # and configures VS Code selected extension auto-update policy from auto_update.
 
 extensions:
-  - id: bierner.emojisense
-    version: "0.10.0"
-    auto_update: false
-  - id: davidanson.vscode-markdownlint
-    version: "0.61.2"
-    auto_update: false
-  - id: donjayamanne.githistory
-    version: "0.6.20"
-    auto_update: false
   - id: github.copilot-chat
-    version: "0.48.1"
+    version: "0.49.0"
     auto_update: true
   - id: github.vscode-github-actions
     version: "0.31.5"
@@ -24,30 +15,15 @@ extensions:
   - id: hashicorp.terraform
     version: "2.39.2"
     auto_update: false
-  - id: ms-python.python
-    version: "2026.4.0"
-    auto_update: false
-  - id: ms-python.vscode-pylance
-    version: "2026.2.1"
-    auto_update: false
-  - id: ms-vscode.vscode-typescript-next
-    version: "6.0.20260416"
-    auto_update: false
   - id: openai.chatgpt
     version: "26.513.21555"
     auto_update: true
   - id: pkief.material-icon-theme
     version: "5.34.0"
     auto_update: false
-  - id: redhat.vscode-xml
-    version: "0.29.2"
-    auto_update: false
   - id: redhat.vscode-yaml
     version: "1.23.0"
     auto_update: false
   - id: rust-lang.rust-analyzer
     version: "0.3.2896"
-    auto_update: false
-  - id: yzhang.markdown-all-in-one
-    version: "3.6.3"
     auto_update: false
