@@ -4,7 +4,7 @@
 
 extensions:
   - id: openai.chatgpt
-    version: "26.513.21555"
+    version: "any"
     auto_update: true
   - id: github.vscode-github-actions
     version: "0.31.5"

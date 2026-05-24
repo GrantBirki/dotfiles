@@ -11,14 +11,16 @@
   "extensions.autoUpdate": false,
   "extensions.ignoreRecommendations": true,
   "extensions.allowed": {
-    "github.vscode-github-actions": "stable",
+    "openai.chatgpt": "stable",
+    "github.vscode-github-actions": [
+      "0.31.5"
+    ],
     "golang.go": [
       "0.52.2"
     ],
     "hashicorp.terraform": [
       "2.39.2"
     ],
-    "openai.chatgpt": "stable",
     "pkief.material-icon-theme": [
       "5.34.0"
     ],
