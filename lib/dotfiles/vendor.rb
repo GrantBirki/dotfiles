@@ -141,8 +141,11 @@ module Dotfiles
       metadata = @client.versions(locked_gem.name).find do |version|
         version_number = version.fetch("number", "").to_s
         platform = version.fetch("platform", "ruby").to_s
-        locked_gem.version == version_number ||
+        if locked_gem.version == version_number
+          platform == "ruby"
+        else
           locked_gem.version == "#{version_number}-#{platform}"
+        end
       end
       return metadata if metadata
 
