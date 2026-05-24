@@ -187,18 +187,15 @@ RSpec.describe Dotfiles::TestChecks do
     def valid_plan_json
       JSON.dump(
         "actions" => [
-          action("extension", "update", "id" => "donjayamanne.githistory"),
+          action("extension", "update", "id" => "golang.go"),
           action("extension", "install", "id" => "hashicorp.terraform"),
           action("extension", "keep_auto_update", "id" => "openai.chatgpt"),
-          action("extension", "keep_auto_update", "id" => "github.copilot-chat"),
           action("extension", "prune", "id" => "untracked.publisher"),
-          action("storage", "configure", "key" => "extensions.autoUpdate", "desired" => ["github.copilot-chat", "github.vscode-github-actions", "openai.chatgpt"]),
-          action("storage", "configure", "key" => "extensions.donotAutoUpdate", "desired" => ["donjayamanne.githistory"]),
+          action("storage", "configure", "key" => "extensions.autoUpdate", "desired" => ["openai.chatgpt"]),
+          action("storage", "configure", "key" => "extensions.donotAutoUpdate", "desired" => ["github.vscode-github-actions", "golang.go"]),
           action("setting", "write", "key" => "extensions.allowed", "desired" => {
-            "donjayamanne.githistory" => ["0.6.20"],
             "openai.chatgpt" => "stable",
-            "github.copilot-chat" => "stable",
-            "github.vscode-github-actions" => "stable"
+            "github.vscode-github-actions" => ["0.31.5"]
           })
         ]
       )
@@ -240,8 +237,9 @@ RSpec.describe Dotfiles::TestChecks do
         [gpg]
           format = ssh
         [gpg "ssh"]
-          program = git-secretive-ssh-keygen
           allowedSignersFile = ~/.config/git/allowed_signers
+        [include]
+          path = ~/.config/git/secretive-program.gitconfig
         [commit]
           gpgSign = true
         [tag]
@@ -276,12 +274,25 @@ RSpec.describe Dotfiles::TestChecks do
           expect(error.message).to include(
             "dotfiles/.gitconfig must set core.sshcommand=~/.local/bin/git-secretive-ssh",
             "dotfiles/.gitconfig must set gpg.format=ssh",
+            "dotfiles/.gitconfig must set include.path=~/.config/git/secretive-program.gitconfig",
             "dotfiles/.gitconfig must enable commit.gpgsign",
             "dotfiles/.gitconfig must enable tag.gpgsign",
             "dotfiles/.gitconfig must not set classic GPG signing key gpg.program",
             "dotfiles/.gitconfig user.signingkey must not point at a private SSH key path"
           )
         }
+    end
+
+    it "rejects machine-local Git signing helper paths in tracked config" do
+      root = Dir.mktmpdir
+      write_file(root, "dotfiles/.gitconfig", <<~CONFIG)
+        #{valid_gitconfig}
+        [gpg "ssh"]
+          program = git-secretive-ssh-keygen
+      CONFIG
+
+      expect { described_class.validate(root) }
+        .to raise_error(Dotfiles::TestChecks::Error, /must not set machine-local gpg\.ssh\.program/)
     end
 
     it "reports a missing Git config" do

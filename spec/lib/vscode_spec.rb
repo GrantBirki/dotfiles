@@ -9,6 +9,12 @@ RSpec.describe Dotfiles::VSCode::Extension do
 
     expect(extension.spec).to eq("publisher.extension@1.2.3")
   end
+
+  it "formats an unpinned install spec for any-version extensions" do
+    extension = described_class.new(id: "publisher.extension", version: "any", auto_update: true)
+
+    expect(extension.spec).to eq("publisher.extension")
+  end
 end
 
 RSpec.describe Dotfiles::VSCode::Manager do
@@ -124,6 +130,61 @@ RSpec.describe Dotfiles::VSCode::Manager do
         "fixed.extension" => ["1.0.0"],
         "drifty.extension" => "stable",
         "missing.extension" => ["3.0.0"]
+      )
+    end
+  end
+
+  it "allows any-version auto-update extensions and installs them unpinned when missing" do
+    Dir.mktmpdir do |dir|
+      paths = write_vscode_files(
+        dir,
+        extensions: [{ "id" => "openai.chatgpt", "version" => "any", "auto_update" => true }],
+        settings: {
+          "extensions.autoUpdate" => false,
+          "telemetry.telemetryLevel" => "error",
+          "extensions.allowed" => { "openai.chatgpt" => "stable" }
+        }
+      )
+      installed = File.join(dir, "installed.txt")
+      File.write(installed, "")
+      actions = manager_for(paths, installed_extensions_file: installed).actions
+
+      expect(actions).to include(
+        a_hash_including(
+          "type" => "extension",
+          "action" => "install",
+          "id" => "openai.chatgpt",
+          "version" => "any",
+          "spec" => "openai.chatgpt"
+        )
+      )
+      expect(manager_for(paths, installed_extensions_file: installed).desired_settings.fetch("extensions.allowed"))
+        .to eq("openai.chatgpt" => "stable")
+    end
+  end
+
+  it "keeps installed any-version auto-update extensions at their current version" do
+    Dir.mktmpdir do |dir|
+      paths = write_vscode_files(
+        dir,
+        extensions: [{ "id" => "openai.chatgpt", "version" => "any", "auto_update" => true }],
+        settings: {
+          "extensions.autoUpdate" => false,
+          "telemetry.telemetryLevel" => "error",
+          "extensions.allowed" => { "openai.chatgpt" => "stable" }
+        }
+      )
+      installed = File.join(dir, "installed.txt")
+      File.write(installed, "openai.chatgpt@26.519.32039\n")
+
+      expect(manager_for(paths, installed_extensions_file: installed).actions).to include(
+        a_hash_including(
+          "type" => "extension",
+          "action" => "keep_auto_update",
+          "id" => "openai.chatgpt",
+          "current_version" => "26.519.32039",
+          "version" => "any"
+        )
       )
     end
   end
@@ -641,6 +702,7 @@ RSpec.describe Dotfiles::VSCode::Manager do
           [{ "extensions" => [extensions_data.first.merge("id" => "BAD")] }, /invalid id/],
           [{ "extensions" => [extensions_data.first.merge("version" => "")] }, /invalid version/],
           [{ "extensions" => [extensions_data.first.merge("auto_update" => nil)] }, /must set auto_update/],
+          [{ "extensions" => [extensions_data.first.merge("version" => "any")] }, /version `any` only when auto_update is true/],
           [{ "extensions" => [extensions_data.first, extensions_data.first] }, /duplicate VS Code extension id/]
         ]
 

@@ -15,10 +15,17 @@ module Dotfiles
     DEFAULT_SETTINGS_PATH = File.join(ROOT, "configs/vsc/settings.json")
     SELECTED_AUTO_UPDATE_KEY = "extensions.autoUpdate"
     DISABLED_AUTO_UPDATE_KEY = "extensions.donotAutoUpdate"
+    ANY_VERSION = "any"
 
     Extension = Struct.new(:id, :version, :auto_update, keyword_init: true) do
       def spec
+        return id if any_version?
+
         "#{id}@#{version}"
+      end
+
+      def any_version?
+        version == ANY_VERSION
       end
     end
 
@@ -173,6 +180,10 @@ module Dotfiles
 
         unless auto_update == true || auto_update == false
           raise Error, "extensions[#{index}] must set auto_update to true or false: #{id}"
+        end
+
+        if version == ANY_VERSION && auto_update != true
+          raise Error, "extensions[#{index}] can use version `any` only when auto_update is true: #{id}"
         end
 
         if seen[id]
