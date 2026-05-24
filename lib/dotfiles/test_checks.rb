@@ -298,12 +298,13 @@ module Dotfiles
       EXPECTED_VALUES = {
         "core.sshcommand" => "~/.local/bin/git-secretive-ssh",
         "gpg.format" => "ssh",
-        "gpg.ssh.program" => "git-secretive-ssh-keygen",
         "gpg.ssh.allowedsignersfile" => "~/.config/git/allowed_signers",
+        "include.path" => "~/.config/git/secretive-program.gitconfig",
         "user.signingkey" => "~/.config/git/secretive_git_key.pub"
       }.freeze
       REQUIRED_TRUE_VALUES = %w[commit.gpgsign tag.gpgsign tag.forcesignannotated].freeze
       CLASSIC_GPG_KEYS = %w[gpg.program gpg.openpgp.program].freeze
+      GENERATED_LOCAL_KEYS = %w[gpg.ssh.program].freeze
       PRIVATE_KEY_PATH_PATTERN = %r{(^|/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\z|[._-])}.freeze
 
       def validate(root)
@@ -313,6 +314,7 @@ module Dotfiles
         failures.concat(expected_value_failures(config))
         failures.concat(required_true_failures(config))
         failures.concat(classic_gpg_failures(config))
+        failures.concat(generated_local_key_failures(config))
         failures.concat(signing_key_failures(config))
         raise Error, failures.join("\n") unless failures.empty?
 
@@ -343,6 +345,14 @@ module Dotfiles
           next unless config.key?(key)
 
           failures << "dotfiles/.gitconfig must not set classic GPG signing key #{key}"
+        end
+      end
+
+      def generated_local_key_failures(config)
+        GENERATED_LOCAL_KEYS.each_with_object([]) do |key, failures|
+          next unless config.key?(key)
+
+          failures << "dotfiles/.gitconfig must not set machine-local #{key}; script/install writes ~/.config/git/secretive-program.gitconfig"
         end
       end
 

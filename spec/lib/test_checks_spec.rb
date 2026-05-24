@@ -240,8 +240,9 @@ RSpec.describe Dotfiles::TestChecks do
         [gpg]
           format = ssh
         [gpg "ssh"]
-          program = git-secretive-ssh-keygen
           allowedSignersFile = ~/.config/git/allowed_signers
+        [include]
+          path = ~/.config/git/secretive-program.gitconfig
         [commit]
           gpgSign = true
         [tag]
@@ -276,12 +277,25 @@ RSpec.describe Dotfiles::TestChecks do
           expect(error.message).to include(
             "dotfiles/.gitconfig must set core.sshcommand=~/.local/bin/git-secretive-ssh",
             "dotfiles/.gitconfig must set gpg.format=ssh",
+            "dotfiles/.gitconfig must set include.path=~/.config/git/secretive-program.gitconfig",
             "dotfiles/.gitconfig must enable commit.gpgsign",
             "dotfiles/.gitconfig must enable tag.gpgsign",
             "dotfiles/.gitconfig must not set classic GPG signing key gpg.program",
             "dotfiles/.gitconfig user.signingkey must not point at a private SSH key path"
           )
         }
+    end
+
+    it "rejects machine-local Git signing helper paths in tracked config" do
+      root = Dir.mktmpdir
+      write_file(root, "dotfiles/.gitconfig", <<~CONFIG)
+        #{valid_gitconfig}
+        [gpg "ssh"]
+          program = git-secretive-ssh-keygen
+      CONFIG
+
+      expect { described_class.validate(root) }
+        .to raise_error(Dotfiles::TestChecks::Error, /must not set machine-local gpg\.ssh\.program/)
     end
 
     it "reports a missing Git config" do

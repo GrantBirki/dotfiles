@@ -10,8 +10,9 @@
 [gpg]
 	format = ssh
 [gpg "ssh"]
-	program = git-secretive-ssh-keygen
 	allowedSignersFile = ~/.config/git/allowed_signers
+[include]
+	path = ~/.config/git/secretive-program.gitconfig
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [commit]

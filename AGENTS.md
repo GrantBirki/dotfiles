@@ -109,6 +109,11 @@ Managed files currently include:
 - Optionally `~/Library/Application Support/Code/User/mcp.json` when the ignored
   local source `configs/vsc/mcp.json` exists.
 
+`script/install` also generates `~/.config/git/secretive-program.gitconfig`
+with the current machine's absolute path to the Secretive signing wrapper,
+because Git does not expand `~` for `gpg.ssh.program`. This generated include
+is local-only and must not be committed.
+
 Manifest fields:
 
 - `id`: Stable identifier used in logs and state files.
@@ -259,8 +264,10 @@ baseline is Secretive-backed SSH only. Keep any disk-key SSH usage behind the
 explicit `ssh-with-key` helper for one-off non-Git legacy hosts.
 
 `dotfiles/.gitconfig` must keep Git transport and signing on the Secretive
-wrappers. Do not reintroduce classic GPG signing, direct private-key signing, or
-default SSH identity discovery for Git operations.
+wrappers. The tracked config should include the generated local
+`~/.config/git/secretive-program.gitconfig` file rather than committing a
+machine-specific `gpg.ssh.program` path. Do not reintroduce classic GPG signing,
+direct private-key signing, or default SSH identity discovery for Git operations.
 
 When adding an alias or user-facing function:
 
