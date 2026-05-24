@@ -11,16 +11,6 @@
   "extensions.autoUpdate": false,
   "extensions.ignoreRecommendations": true,
   "extensions.allowed": {
-    "bierner.emojisense": [
-      "0.10.0"
-    ],
-    "davidanson.vscode-markdownlint": [
-      "0.61.2"
-    ],
-    "donjayamanne.githistory": [
-      "0.6.20"
-    ],
-    "github.copilot-chat": "stable",
     "github.vscode-github-actions": "stable",
     "golang.go": [
       "0.52.2"
@@ -28,30 +18,15 @@
     "hashicorp.terraform": [
       "2.39.2"
     ],
-    "ms-python.python": [
-      "2026.4.0"
-    ],
-    "ms-python.vscode-pylance": [
-      "2026.2.1"
-    ],
-    "ms-vscode.vscode-typescript-next": [
-      "6.0.20260416"
-    ],
     "openai.chatgpt": "stable",
     "pkief.material-icon-theme": [
       "5.34.0"
-    ],
-    "redhat.vscode-xml": [
-      "0.29.2"
     ],
     "redhat.vscode-yaml": [
       "1.23.0"
     ],
     "rust-lang.rust-analyzer": [
       "0.3.2896"
-    ],
-    "yzhang.markdown-all-in-one": [
-      "3.6.3"
     ]
   },
   "files.eol": "\n",
@@ -143,8 +118,10 @@
     }
   ],
   "javascript.updateImportsOnFileMove.enabled": "always",
-  "material-icon-theme.languages.associations": {},
-  "[gemfile]": {},
+  "material-icon-theme.languages.associations": {
+  },
+  "[gemfile]": {
+  },
   "[go]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"

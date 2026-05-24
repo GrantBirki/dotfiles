@@ -3,21 +3,18 @@
 # and configures VS Code selected extension auto-update policy from auto_update.
 
 extensions:
-  - id: github.copilot-chat
-    version: "0.49.0"
+  - id: openai.chatgpt
+    version: "26.513.21555"
     auto_update: true
   - id: github.vscode-github-actions
     version: "0.31.5"
-    auto_update: true
+    auto_update: false
   - id: golang.go
     version: "0.52.2"
     auto_update: false
   - id: hashicorp.terraform
     version: "2.39.2"
     auto_update: false
-  - id: openai.chatgpt
-    version: "26.513.21555"
-    auto_update: true
   - id: pkief.material-icon-theme
     version: "5.34.0"
     auto_update: false
