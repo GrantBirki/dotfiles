@@ -3,6 +3,7 @@
 require "fileutils"
 require_relative "manifest"
 require_relative "runtime"
+require_relative "sfw_binary"
 require_relative "vscode"
 
 module Dotfiles
@@ -22,6 +23,7 @@ module Dotfiles
       err: $stderr,
       platform: RUBY_PLATFORM,
       manifest: nil,
+      sfw_binary: nil,
       vscode_manager: nil,
       state_dir: File.join(ROOT, ".dotfiles/state"),
       default_directories: DEFAULT_DIRECTORIES,
@@ -33,12 +35,14 @@ module Dotfiles
       @err = err
       @platform = platform
       @manifest = manifest
+      @sfw_binary = sfw_binary
       @vscode_manager = vscode_manager
       @state_dir = state_dir
       @default_directories = default_directories
       @color = color
       @dry_run = false
       @install_vscode_extensions = true
+      @install_sfw_binary = env_sfw_install_enabled?
       @dir_changes = 0
       @manifest_ok = 0
       @manifest_changes = 0
@@ -64,6 +68,8 @@ module Dotfiles
       section "📁 Managed files"
       install_manifest_entries
       print_manifest_summary
+      section "🛡️ Socket Firewall"
+      install_sfw_binary
       section "🔐 Git"
       install_git_secretive_program_include
       write_state_file unless dry_run?
@@ -101,6 +107,8 @@ module Dotfiles
           @dry_run = true
         when "--skip-vscode-extensions"
           @install_vscode_extensions = false
+        when "--skip-sfw-binary"
+          @install_sfw_binary = false
         when "--production"
           next
         when "--help", "-h"
@@ -116,10 +124,18 @@ module Dotfiles
 
     def usage
       <<~USAGE
-        Usage: script/install [--dry-run] [--skip-vscode-extensions]
+        Usage: script/install [--dry-run] [--skip-vscode-extensions] [--skip-sfw-binary]
 
-        Install managed dotfiles from install.yml and reconcile the VS Code extension manifest.
+        Install managed dotfiles, reconcile the Socket Firewall binary, and reconcile the VS Code extension manifest.
       USAGE
+    end
+
+    def env_sfw_install_enabled?
+      ENV.fetch("DOTFILES_SKIP_SFW_BINARY", "0") != "1"
+    end
+
+    def sfw_binary
+      @sfw_binary ||= SFWBinary.new(home: home, out: out, err: err)
     end
 
     def ensure_default_directories
@@ -259,6 +275,15 @@ module Dotfiles
         File.write(path, content)
         success "Git Secretive signing helper include: wrote #{path}"
       end
+    end
+
+    def install_sfw_binary
+      unless @install_sfw_binary
+        info "Socket Firewall binary: skipped"
+        return
+      end
+
+      sfw_binary.install(dry_run: dry_run?)
     end
 
     def git_secretive_program_include_content

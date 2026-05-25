@@ -103,6 +103,7 @@ ruby -c "$ROOT/lib/dotfiles/runtime.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/installer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/restorer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/socket_firewall.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/sfw_binary.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/doctor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/vendor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/test_checks.rb" >/dev/null

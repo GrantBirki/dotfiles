@@ -27,6 +27,7 @@ RSpec.describe "codex-sfw launcher" do
         {
           printf 'DOTFILES_SFW_REQUIRE=%s\\n' "$DOTFILES_SFW_REQUIRE"
           printf 'DOTFILES_SFW_SHIM_DIR=%s\\n' "$DOTFILES_SFW_SHIM_DIR"
+          printf 'DOTFILES_SFW_BIN=%s\\n' "$DOTFILES_SFW_BIN"
           printf 'PATH=%s\\n' "$PATH"
           printf 'args=%s\\n' "$*"
         } > "$CAPTURE_PATH"
@@ -35,6 +36,8 @@ RSpec.describe "codex-sfw launcher" do
       _stdout, stderr, status = Open3.capture3(
         {
           "CAPTURE_PATH" => capture_path,
+          "DOTFILES_SFW_BIN" => nil,
+          "DOTFILES_SFW_SHIM_DIR" => nil,
           "HOME" => home,
           "PATH" => "/usr/bin:/bin"
         },
@@ -48,6 +51,7 @@ RSpec.describe "codex-sfw launcher" do
       expect(capture).to include(
         "DOTFILES_SFW_REQUIRE=1",
         "DOTFILES_SFW_SHIM_DIR=#{File.join(home, ".local/share/dotfiles/sfw-shims")}",
+        "DOTFILES_SFW_BIN=#{File.join(home, ".local/bin/sfw")}",
         "args=exec npm --version"
       )
       expect(capture).to include("PATH=#{(expected_paths + ["/usr/bin", "/bin"]).join(File::PATH_SEPARATOR)}")

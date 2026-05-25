@@ -33,7 +33,11 @@ RSpec.describe Dotfiles::Installer do
     instance_double(Dotfiles::VSCode::Manager, actions: actions, apply: true)
   end
 
-  def run_installer(argv:, entries:, manager: vscode_manager, platform: "arm64-darwin25", state_dir: nil, default_directories: [])
+  def sfw_binary
+    instance_double(Dotfiles::SFWBinary, install: true)
+  end
+
+  def run_installer(argv:, entries:, manager: vscode_manager, sfw: sfw_binary, platform: "arm64-darwin25", state_dir: nil, default_directories: [])
     stdout = StringIO.new
     stderr = StringIO.new
     installer = described_class.new(
@@ -43,6 +47,7 @@ RSpec.describe Dotfiles::Installer do
       err: stderr,
       platform: platform,
       manifest: manifest(entries),
+      sfw_binary: sfw,
       vscode_manager: manager,
       state_dir: state_dir || File.join(@home, "state"),
       default_directories: default_directories,
@@ -205,6 +210,30 @@ RSpec.describe Dotfiles::Installer do
 
     expect(status).to eq(0)
     expect(stdout).to include("VS Code: skipped", "Existing shells may need: source ~/.bashrc")
+  end
+
+  it "installs the Socket Firewall binary through the shared installer" do
+    sfw = sfw_binary
+
+    status, stdout, stderr = run_installer(argv: [], entries: [], sfw: sfw)
+
+    expect(status).to eq(0)
+    expect(stderr).to eq("")
+    expect(stdout).to include("Socket Firewall")
+    expect(sfw).to have_received(:install).with(dry_run: false)
+  end
+
+  it "previews or skips the Socket Firewall binary install" do
+    sfw = sfw_binary
+    status, = run_installer(argv: ["--dry-run"], entries: [], sfw: sfw)
+    expect(status).to eq(0)
+    expect(sfw).to have_received(:install).with(dry_run: true)
+
+    skipped = sfw_binary
+    status, stdout, = run_installer(argv: ["--skip-sfw-binary"], entries: [], sfw: skipped)
+    expect(status).to eq(0)
+    expect(stdout).to include("Socket Firewall binary: skipped")
+    expect(skipped).not_to have_received(:install)
   end
 
   it "reports unsupported install modes from manifest entries" do

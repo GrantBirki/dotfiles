@@ -63,6 +63,11 @@ The repo is public. Treat every committed byte as public-facing.
 - `local-bin/git-secretive-ssh-keygen`: Git SSH signing wrapper that runs
   `ssh-keygen` with Secretive's agent socket and refuses non-managed signing
   key files for signing operations.
+- `configs/sfw/sfw.yml`: Pinned Socket Firewall Free release metadata, including
+  version, asset URL, size, SHA256, and GitHub release digest.
+- `lib/dotfiles/sfw_binary.rb`: Verifies and installs the pinned Socket Firewall
+  binary into `~/.local/bin/sfw` without committing the binary to this public
+  repo.
 - `lib/dotfiles/vscode.rb`: VS Code manifest parser, planner, applier, and
   validation logic.
 - `dotfiles/`: Shell, Git, Ruby, profile, and alias metadata.
@@ -109,6 +114,10 @@ Managed files currently include:
 - Optionally `~/Library/Application Support/Code/User/mcp.json` when the ignored
   local source `configs/vsc/mcp.json` exists.
 
+Separately, `script/install` reconciles `~/.local/bin/sfw` as a verified pinned
+binary from `configs/sfw/sfw.yml` when missing or mismatched, unless explicitly
+skipped.
+
 `script/install` also generates `~/.config/git/secretive-program.gitconfig`
 with the current machine's absolute path to the Secretive signing wrapper,
 because Git does not expand `~` for `gpg.ssh.program`. This generated include
@@ -135,6 +144,13 @@ in dry-run mode.
 `script/install --skip-vscode-extensions` skips extension management while still
 installing manifest-managed files. Use it only when intentionally avoiding
 VS Code changes for that run.
+
+`script/install --skip-sfw-binary` skips Socket Firewall binary reconciliation.
+The normal install path should verify the pinned binary already present at
+`~/.local/bin/sfw` without network access. If the binary is missing or
+mismatched, it may fetch the pinned GitHub release metadata and asset, verify
+the committed SHA256 and release digest, and then install the binary. Do not
+commit the SFW release binary to this public repository.
 
 The installer writes state to `.dotfiles/state/install-*.tsv`, which is ignored
 by git. Do not commit install state.
@@ -357,6 +373,10 @@ This repo also installs PATH shims for the Socket Firewall Free-supported
 package managers `npm`, `yarn`, `pnpm`, `pip`, `uv`, and `cargo`. Those shims
 are intended to protect non-interactive commands from agents such as Codex when
 the protected shim directory is present in `PATH`.
+
+The shims should execute `DOTFILES_SFW_BIN`, which defaults to
+`~/.local/bin/sfw`, rather than resolving `sfw` through `PATH`. This avoids
+depending on a nodenv-scoped global npm install of SFW.
 
 Do not use bare `npx`, `uvx`, `pipx`, `poetry install`, `bun install`,
 `gem install`, `bundle install`, `go get`, `mvn`, `gradle`, or `dotnet restore`

@@ -12,7 +12,20 @@ RSpec.describe Dotfiles::SocketFirewall do
     path
   end
 
-  def build(argv: [], env: {}, runner: ->(*) { true }, home: "/home/user")
+  def sfw_binary(status: nil)
+    status ||= {
+      "path" => "/home/user/.local/bin/sfw",
+      "expected_sha256" => "e" * 64,
+      "actual_sha256" => "<missing>",
+      "hash_status" => "mismatch",
+      "executable_status" => "missing",
+      "signing_status" => "missing",
+      "quarantine_status" => "missing"
+    }
+    instance_double(Dotfiles::SFWBinary, install: true, verify: true, status: status)
+  end
+
+  def build(argv: [], env: {}, runner: ->(*) { true }, home: "/home/user", sfw: sfw_binary)
     described_class.new(
       argv: argv,
       out: StringIO.new,
@@ -20,7 +33,8 @@ RSpec.describe Dotfiles::SocketFirewall do
       runner: runner,
       env: env,
       home: home,
-      root: ROOT
+      root: ROOT,
+      sfw_binary: sfw
     )
   end
 
@@ -51,6 +65,9 @@ RSpec.describe Dotfiles::SocketFirewall do
         .to include("protected" => npm_shim, "unprotected" => real_npm)
       expect(firewall.format_status(data)).to include(
         "Socket Firewall status",
+        "binary:       /home/user/.local/bin/sfw",
+        "binary hash:  mismatch",
+        "executable:   missing",
         "require mode: 0",
         "disabled:     1",
         "npm    protected:"
@@ -79,64 +96,88 @@ RSpec.describe Dotfiles::SocketFirewall do
         "[shell_environment_policy]",
         "DOTFILES_SFW_REQUIRE = \"1\"",
         "DOTFILES_SFW_SHIM_DIR = \"#{File.join(dir, "shim")}\"",
+        "DOTFILES_SFW_BIN = \"/home/user/.local/bin/sfw\"",
         "PATH = \"#{File.join(dir, "shim")}:#{File.join(dir, "bin")}\""
       )
     end
   end
 
-  it "returns doctor success when real sfw is available outside the shim directory" do
+  it "returns doctor success when the managed sfw binary matches" do
     Dir.mktmpdir do |dir|
       real_dir = File.join(dir, "real")
       executable(real_dir, "sfw")
-      firewall = build(argv: ["doctor"], env: { "PATH" => real_dir })
+      sfw = sfw_binary(status: {
+        "path" => "/home/user/.local/bin/sfw",
+        "expected_sha256" => "e" * 64,
+        "actual_sha256" => "e" * 64,
+        "hash_status" => "ok",
+        "executable_status" => "ok",
+        "signing_status" => "valid",
+        "quarantine_status" => "absent"
+      })
+      firewall = build(argv: ["doctor"], env: { "PATH" => real_dir }, sfw: sfw)
 
       expect(firewall.run).to eq(0)
-      expect(firewall.out.string).to include("sfw    unprotected: #{File.join(real_dir, "sfw")}")
+      expect(firewall.out.string).to include("binary hash:  ok", "sfw    unprotected: #{File.join(real_dir, "sfw")}")
       expect(firewall.err.string).to eq("")
     end
   end
 
-  it "returns doctor failure when sfw is required but unavailable" do
+  it "returns doctor failure when sfw is required but the managed binary is unavailable" do
     firewall = build(argv: ["doctor"], env: { "PATH" => "", "DOTFILES_SFW_REQUIRE" => "1" })
 
     expect(firewall.run).to eq(1)
-    expect(firewall.err.string).to eq("sfw is required but unavailable outside the protected shim directory\n")
+    expect(firewall.err.string).to eq("sfw is required but the managed binary is unavailable, mismatched, or not executable\n")
   end
 
-  it "installs sfw and rehashes nodenv when nodenv is available" do
-    Dir.mktmpdir do |dir|
-      executable(dir, "nodenv")
-      calls = []
-      runner = lambda do |env, *command, chdir:|
-        calls << [env, command, chdir]
-        true
-      end
-      firewall = build(argv: ["install"], env: { "PATH" => dir }, runner: runner)
-
-      expect(firewall.run).to eq(0)
-      expect(calls).to eq([
-        [{ "DOTFILES_SFW_DISABLE" => "1" }, %w[npm i -g sfw], ROOT],
-        [{}, %w[nodenv rehash], ROOT]
-      ])
-      expect(firewall.out.string).to include("Socket Firewall install")
-    end
-  end
-
-  it "supports dry-run installs and skips nodenv rehash when nodenv is missing" do
-    firewall = build(argv: ["install", "--dry-run"], env: { "PATH" => "" }, runner: ->(*) { raise "should not run" })
-
-    expect(firewall.run).to eq(0)
-    expect(firewall.out.string).to include(
-      "would run: DOTFILES_SFW_DISABLE=1 npm i -g sfw",
-      "nodenv not found; skipped nodenv rehash"
-    )
-  end
-
-  it "reports failed install commands" do
-    firewall = build(argv: ["install"], env: { "PATH" => "" }, runner: ->(*) { false })
+  it "returns doctor failure when the managed sfw binary is not executable" do
+    sfw = sfw_binary(status: {
+      "path" => "/home/user/.local/bin/sfw",
+      "expected_sha256" => "e" * 64,
+      "actual_sha256" => "e" * 64,
+      "hash_status" => "ok",
+      "executable_status" => "not-executable",
+      "signing_status" => "valid",
+      "quarantine_status" => "absent"
+    })
+    firewall = build(argv: ["doctor"], env: { "PATH" => "", "DOTFILES_SFW_REQUIRE" => "1" }, sfw: sfw)
 
     expect(firewall.run).to eq(1)
-    expect(firewall.err.string).to eq("command failed: DOTFILES_SFW_DISABLE=1 npm i -g sfw\n")
+    expect(firewall.out.string).to include("binary hash:  ok", "executable:   not-executable")
+  end
+
+  it "installs the managed sfw binary" do
+    sfw = sfw_binary
+    firewall = build(argv: ["install"], env: { "PATH" => "" }, sfw: sfw)
+
+    expect(firewall.run).to eq(0)
+    expect(sfw).to have_received(:install).with(dry_run: false)
+    expect(firewall.out.string).to include("Socket Firewall install")
+  end
+
+  it "supports dry-run installs" do
+    sfw = sfw_binary
+    firewall = build(argv: ["install", "--dry-run"], env: { "PATH" => "" }, sfw: sfw)
+
+    expect(firewall.run).to eq(0)
+    expect(sfw).to have_received(:install).with(dry_run: true)
+  end
+
+  it "verifies the managed sfw binary" do
+    sfw = sfw_binary
+    firewall = build(argv: ["verify", "/tmp/sfw"], sfw: sfw)
+
+    expect(firewall.run).to eq(0)
+    expect(sfw).to have_received(:verify).with("/tmp/sfw")
+  end
+
+  it "reports failed managed sfw binary install" do
+    sfw = sfw_binary
+    allow(sfw).to receive(:install).and_raise(Dotfiles::Error, "broken sfw")
+    firewall = build(argv: ["install"], env: { "PATH" => "" }, sfw: sfw)
+
+    expect(firewall.run).to eq(1)
+    expect(firewall.err.string).to eq("broken sfw\n")
   end
 
   it "cleans package-manager caches with SFW disabled" do
@@ -154,6 +195,16 @@ RSpec.describe Dotfiles::SocketFirewall do
         "would run: rm -fr #{File.join(dir, "cargo/registry")} #{File.join(dir, "cargo/git")}"
       )
       expect(firewall.out.string).not_to include("cargo clean gc")
+    end
+  end
+
+  it "reports failed cache clean commands" do
+    Dir.mktmpdir do |dir|
+      executable(dir, "npm")
+      firewall = build(argv: ["cache-clean"], env: { "PATH" => dir }, runner: ->(*) { false })
+
+      expect(firewall.run).to eq(1)
+      expect(firewall.err.string).to eq("command failed: DOTFILES_SFW_DISABLE=1 npm cache clean --force\n")
     end
   end
 
@@ -189,6 +240,6 @@ RSpec.describe Dotfiles::SocketFirewall do
     expect(bad_option.run).to eq(1)
     expect(bad_option.err.string).to include("Unknown option: --wat", "Usage: script/socket-firewall")
     expect(bad_command.run).to eq(2)
-    expect(bad_command.err.string).to eq("Usage: script/socket-firewall [status|doctor|install|cache-clean|codex-config] [--dry-run]\n")
+    expect(bad_command.err.string).to eq("Usage: script/socket-firewall [status|doctor|install|verify|cache-clean|codex-config] [--dry-run]\n")
   end
 end
