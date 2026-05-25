@@ -218,6 +218,42 @@ RSpec.describe Dotfiles::SFWBinary do
     end
   end
 
+  it "reports missing macOS signing tools as unavailable in status" do
+    Dir.mktmpdir do |dir|
+      config = metadata_file(dir)
+      target = File.join(dir, ".local/bin/sfw")
+      FileUtils.mkdir_p(File.dirname(target))
+      File.write(target, "binary")
+      FileUtils.chmod(0o755, target)
+      binary = build(
+        config_path: config,
+        env: {},
+        home: dir,
+        commands: [
+          command_result(success: false, stderr: "command not found: /usr/bin/codesign"),
+          command_result(success: false, stderr: "command not found: /usr/bin/xattr")
+        ]
+      )
+
+      expect(binary.status).to include(
+        "hash_status" => "ok",
+        "executable_status" => "ok",
+        "signing_status" => "unavailable",
+        "quarantine_status" => "unavailable"
+      )
+    end
+  end
+
+  it "turns missing command execution into a failed command result" do
+    Dir.mktmpdir do |dir|
+      binary = described_class.new(config_path: metadata_file(dir), env: {}, home: dir)
+      result = binary.send(:run_command, [File.join(dir, "missing-command")])
+
+      expect(result).not_to be_success
+      expect(result.stderr).to include("command not found:")
+    end
+  end
+
   it "previews missing installs without network or filesystem mutation" do
     Dir.mktmpdir do |dir|
       config = metadata_file(dir)
@@ -246,11 +282,7 @@ RSpec.describe Dotfiles::SFWBinary do
       FileUtils.mkdir_p(File.dirname(target))
       File.write(seed, "binary")
       File.write(target, "old")
-      commands = [
-        command_result(success: false, stderr: "code object is not signed at all"),
-        command_result(success: false)
-      ]
-      binary = build(config_path: config, env: {}, home: dir, commands: commands)
+      binary = build(config_path: config, env: {}, home: dir, commands: [command_result(success: true)])
 
       expect(binary.install).to eq(true)
       expect(File.read(target)).to eq("binary")
@@ -258,9 +290,27 @@ RSpec.describe Dotfiles::SFWBinary do
       expect(Dir[File.join(dir, ".local/bin/sfw.bak*")].length).to eq(1)
       expect(binary.out.string).to include(
         "using verified local asset",
-        "removed quarantine attribute for unsigned binary",
+        "signed binary verified",
         "installed #{target}"
       )
+    end
+  end
+
+  it "rejects unsigned binaries even when their hash matches" do
+    Dir.mktmpdir do |dir|
+      config = metadata_file(dir)
+      seed = File.join(dir, "Downloads/sfw-free-macos-arm64")
+      FileUtils.mkdir_p(File.dirname(seed))
+      File.write(seed, "binary")
+      binary = build(
+        config_path: config,
+        env: {},
+        home: dir,
+        commands: [command_result(success: false, stderr: "code object is not signed at all")]
+      )
+
+      expect { binary.install }.to raise_error(Dotfiles::Error, /signature verification failed/)
+      expect(File).not_to exist(File.join(dir, ".local/bin/sfw"))
     end
   end
 

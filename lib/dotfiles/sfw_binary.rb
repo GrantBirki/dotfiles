@@ -211,10 +211,10 @@ module Dotfiles
       FileUtils.cp(source, tmp)
       FileUtils.chmod(0o755, tmp)
       raise Error, "installed SFW binary failed verification" unless matching?(tmp)
+      verify_signature!(tmp)
 
       backup_existing_target
       FileUtils.mv(tmp, target_path)
-      handle_quarantine(target_path)
       out.puts "Socket Firewall binary: installed #{target_path}"
     ensure
       FileUtils.rm_f(tmp) if tmp && File.exist?(tmp)
@@ -232,7 +232,7 @@ module Dotfiles
       end
 
       FileUtils.chmod(0o755, target_path)
-      handle_quarantine(target_path)
+      verify_signature!(target_path)
       out.puts "Socket Firewall binary: repaired executable mode on #{target_path}"
     end
 
@@ -244,22 +244,16 @@ module Dotfiles
       out.puts "Socket Firewall binary: backed up existing target to #{backup}"
     end
 
-    def handle_quarantine(path)
-      signing = signing_status(path)
-      case signing
-      when "valid"
-        out.puts "Socket Firewall binary: signed binary verified; leaving quarantine attributes unchanged"
-      when "unsigned"
-        @command_runner.call(["/usr/bin/xattr", "-d", "com.apple.quarantine", path])
-        out.puts "Socket Firewall binary: removed quarantine attribute for unsigned binary"
-      else
-        raise Error, "SFW binary signature verification failed"
-      end
+    def verify_signature!(path)
+      raise Error, "SFW binary signature verification failed" unless signing_status(path) == "valid"
+
+      out.puts "Socket Firewall binary: signed binary verified; leaving quarantine attributes unchanged"
     end
 
     def signing_status(path)
       result = @command_runner.call(["/usr/bin/codesign", "--verify", "--strict", "--verbose=2", path])
       return "valid" if result.success?
+      return "unavailable" if command_unavailable?(result, "/usr/bin/codesign")
 
       output = "#{result.stdout}\n#{result.stderr}"
       return "unsigned" if output.include?("code object is not signed") || output.include?("is not signed at all")
@@ -271,6 +265,8 @@ module Dotfiles
       return "missing" unless File.file?(path)
 
       result = @command_runner.call(["/usr/bin/xattr", "-p", "com.apple.quarantine", path])
+      return "unavailable" if command_unavailable?(result, "/usr/bin/xattr")
+
       result.success? ? "present" : "absent"
     end
 
@@ -278,6 +274,11 @@ module Dotfiles
       return "missing" unless File.file?(path)
 
       File.executable?(path) ? "ok" : "not-executable"
+    end
+
+    def command_unavailable?(result, command)
+      output = "#{result.stdout}\n#{result.stderr}"
+      output.include?("command not found: #{command}")
     end
 
     def fetch_release(url)
@@ -318,6 +319,8 @@ module Dotfiles
     def run_command(command)
       stdout, stderr, status = Open3.capture3(*command)
       CommandResult.new(success: status.success?, stdout: stdout, stderr: stderr)
+    rescue Errno::ENOENT
+      CommandResult.new(success: false, stderr: "command not found: #{command.first}")
     end
   end
 end
