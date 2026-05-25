@@ -172,6 +172,24 @@ RSpec.describe Dotfiles::Installer do
     expect(Dir[File.join(@home, "dotfiles_old/.config/readme*")].length).to eq(1)
   end
 
+  it "writes restore state before the fallible Socket Firewall step" do
+    target = File.join(@home, ".config/readme")
+    state_dir = File.join(@home, "state")
+    FileUtils.mkdir_p(File.dirname(target))
+    File.write(target, "old")
+    copy_entry = entry("mode" => "copy")
+    sfw = sfw_binary
+    allow(sfw).to receive(:install).and_raise(Dotfiles::Error, "broken sfw")
+
+    status, stdout, stderr = run_installer(argv: [], entries: [copy_entry], sfw: sfw, state_dir: state_dir)
+
+    expect(status).to eq(1)
+    expect(stdout).to include("copied readme", "Install state:")
+    expect(stderr).to eq("broken sfw\n")
+    state = Dir[File.join(state_dir, "install-*.tsv")].first
+    expect(File.read(state)).to include("readme", "copied", "dotfiles_old/.config/readme")
+  end
+
   it "previews backups and copy operations in dry-run mode" do
     target = File.join(@home, ".config/readme")
     FileUtils.mkdir_p(File.dirname(target))

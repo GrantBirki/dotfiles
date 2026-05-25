@@ -68,11 +68,11 @@ module Dotfiles
       section "📁 Managed files"
       install_manifest_entries
       print_manifest_summary
+      write_state_file unless dry_run?
       section "🛡️ Socket Firewall"
       install_sfw_binary
       section "🔐 Git"
       install_git_secretive_program_include
-      write_state_file unless dry_run?
 
       section "🧩 VS Code"
       reconcile_vscode
