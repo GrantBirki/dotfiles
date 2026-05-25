@@ -1,0 +1,12 @@
+---
+version: v1.10.0
+asset: sfw-free-macos-arm64
+url: https://github.com/SocketDev/sfw-free/releases/download/v1.10.0/sfw-free-macos-arm64
+sha256: fd75944bddc663bee2b19f15367706387113d9609fea4f51b02fc3b5dbdb9281
+size: 127527616
+github_digest: sha256:fd75944bddc663bee2b19f15367706387113d9609fea4f51b02fc3b5dbdb9281
+upstream_repo: SocketDev/sfw-free
+release_api_url: https://api.github.com/repos/SocketDev/sfw-free/releases/tags/v1.10.0
+license:
+  name: PolyForm Shield License 1.0.0
+  url: https://github.com/SocketDev/sfw-free#license
