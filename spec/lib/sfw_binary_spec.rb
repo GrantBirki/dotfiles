@@ -254,6 +254,20 @@ RSpec.describe Dotfiles::SFWBinary do
     end
   end
 
+  it "returns successful command results from the default command runner" do
+    Dir.mktmpdir do |dir|
+      status = instance_double(Process::Status, success?: true)
+      allow(Open3).to receive(:capture3).and_return(["stdout", "stderr", status])
+      binary = described_class.new(config_path: metadata_file(dir), env: {}, home: dir)
+
+      result = binary.send(:run_command, ["/bin/echo", "ok"])
+
+      expect(result).to be_success
+      expect(result.stdout).to eq("stdout")
+      expect(result.stderr).to eq("stderr")
+    end
+  end
+
   it "previews missing installs without network or filesystem mutation" do
     Dir.mktmpdir do |dir|
       config = metadata_file(dir)
