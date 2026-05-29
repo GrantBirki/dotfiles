@@ -35,9 +35,3 @@ if [ -f "$CARGO_HOME/env" ]; then
   . "$CARGO_HOME/env"
 fi
 path_prepend "$CARGO_HOME/bin"
-
-# crystal
-export CRYSTAL_OPTS="--link-flags=-Wl"
-if command -v crystal >/dev/null 2>&1; then
-  export CRYSTAL_PATH="vendor/shards/install:$(crystal env CRYSTAL_PATH)"
-fi
