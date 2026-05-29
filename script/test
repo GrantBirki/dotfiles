@@ -190,7 +190,7 @@ for dead_path in "${dead_paths[@]}"; do
     fi
 done
 
-dead_marker_pattern="linux_server|gitconfig_linux|linuxbrew|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c"
+dead_marker_pattern="linux_server|gitconfig_linux|linuxbrew|crystal|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c"
 if command -v rg >/dev/null 2>&1; then
     if rg -n -i "$dead_marker_pattern" \
         --hidden \
