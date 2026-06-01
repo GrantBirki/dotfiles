@@ -103,6 +103,7 @@ ruby -c "$ROOT/lib/dotfiles/runtime.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/installer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/restorer.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/socket_firewall.rb" >/dev/null
+ruby -c "$ROOT/lib/dotfiles/sfw_binary.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/doctor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/vendor.rb" >/dev/null
 ruby -c "$ROOT/lib/dotfiles/test_checks.rb" >/dev/null
@@ -189,7 +190,7 @@ for dead_path in "${dead_paths[@]}"; do
     fi
 done
 
-dead_marker_pattern="linux_server|gitconfig_linux|linuxbrew|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c"
+dead_marker_pattern="linux_server|gitconfig_linux|linuxbrew|crystal|crenv|notify-send|dircolors|/home/grantbirki|/mnt/c"
 if command -v rg >/dev/null 2>&1; then
     if rg -n -i "$dead_marker_pattern" \
         --hidden \

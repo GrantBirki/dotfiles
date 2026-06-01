@@ -57,7 +57,9 @@ Karabiner is copied instead of symlinked because Karabiner rewrites its live con
 
 ## Git SSH
 
-Git is configured to use Secretive-backed SSH for fetch, push, commit signing, and tag signing. The managed Git config points all Git SSH transport through `~/.local/bin/git-secretive-ssh` and all Git SSH signing through `~/.local/bin/git-secretive-ssh-keygen`.
+Git is configured to use Secretive-backed SSH for fetch, push, commit signing, and tag signing. The managed Git config points Git SSH transport through `~/.local/bin/git-secretive-ssh`.
+
+Git does not expand `~` for `gpg.ssh.program`, so `script/install` writes a local include file at `~/.config/git/secretive-program.gitconfig` with the current machine's executable path for `git-secretive-ssh-keygen`. Keep that generated include local.
 
 The local public signing key and allowed signers file are intentionally ignored:
 

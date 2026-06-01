@@ -187,6 +187,23 @@ RSpec.describe Dotfiles::Vendor do
     )
   end
 
+  it "matches ruby lockfile entries to ruby platform metadata" do
+    lockfile_path = write_lockfile(TOO_NEW_LOCKFILE)
+    metadata_client = FakeRubyGemsClient.new(
+      "fresh-gem" => [
+        { "number" => "9.0.0", "platform" => "x86_64-linux", "created_at" => "2025-01-01T00:00:00Z" },
+        { "number" => "9.0.0", "platform" => "ruby", "created_at" => "2026-05-01T00:00:00Z" }
+      ]
+    )
+    vendor = build_vendor(runner: ->(*) { true }, metadata_client: metadata_client, lockfile_path: lockfile_path)
+
+    expect(vendor.run).to eq(1)
+    expect(vendor.err.string).to include(
+      "RubyGems cooldown rejected versions newer than 45 days",
+      "fresh-gem 9.0.0 was published 2026-05-01T00:00:00Z"
+    )
+  end
+
   it "returns an error when Gemfile.lock is missing" do
     vendor = build_vendor(lockfile_path: File.join(tmpdir, "missing.lock"))
 

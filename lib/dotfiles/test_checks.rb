@@ -237,10 +237,9 @@ module Dotfiles
 
       def assertions
         [
-          ["fixture should update non-auto-update drift", ->(plan) { action_for(plan, "extension", "update", id: "donjayamanne.githistory") }],
+          ["fixture should update non-auto-update drift", ->(plan) { action_for(plan, "extension", "update", id: "golang.go") }],
           ["fixture should install missing baseline extension", ->(plan) { action_for(plan, "extension", "install", id: "hashicorp.terraform") }],
           ["fixture should keep auto-updated ChatGPT", ->(plan) { action_for(plan, "extension", "keep_auto_update", id: "openai.chatgpt") }],
-          ["fixture should keep auto-updated Copilot Chat", ->(plan) { action_for(plan, "extension", "keep_auto_update", id: "github.copilot-chat") }],
           ["fixture should prune untracked extension", ->(plan) { action_for(plan, "extension", "prune", id: "untracked.publisher") }],
           ["fixture should configure selected auto-update allowlist", method(:valid_auto_update_allowlist?)],
           ["fixture should deny auto-update for tracked non-allowlisted extensions", method(:valid_auto_update_denylist?)],
@@ -260,17 +259,16 @@ module Dotfiles
 
       def valid_auto_update_allowlist?(plan)
         allowlist = action_for(plan, "storage", "configure", key: "extensions.autoUpdate")
-        allowlist && allowlist.fetch("desired") == ["github.copilot-chat", "github.vscode-github-actions", "openai.chatgpt"]
+        allowlist && allowlist.fetch("desired") == ["openai.chatgpt"]
       end
 
       def valid_auto_update_denylist?(plan)
         denylist = action_for(plan, "storage", "configure", key: "extensions.donotAutoUpdate")
         desired = denylist&.fetch("desired", nil)
         desired &&
-          desired.include?("donjayamanne.githistory") &&
-          !desired.include?("openai.chatgpt") &&
-          !desired.include?("github.copilot-chat") &&
-          !desired.include?("github.vscode-github-actions")
+          desired.include?("github.vscode-github-actions") &&
+          desired.include?("golang.go") &&
+          !desired.include?("openai.chatgpt")
       end
 
       def extensions_allowed_action(plan)
@@ -280,15 +278,14 @@ module Dotfiles
 
       def valid_extensions_allowed_pin?(plan)
         allowed = extensions_allowed_action(plan)
-        allowed && allowed.fetch("desired").fetch("donjayamanne.githistory") == ["0.6.20"]
+        allowed && allowed.fetch("desired").fetch("github.vscode-github-actions") == ["0.31.5"]
       end
 
       def valid_extensions_allowed_stable?(plan)
         allowed = extensions_allowed_action(plan)
         allowed &&
           allowed.fetch("desired").fetch("openai.chatgpt") == "stable" &&
-          allowed.fetch("desired").fetch("github.copilot-chat") == "stable" &&
-          allowed.fetch("desired").fetch("github.vscode-github-actions") == "stable"
+          !allowed.fetch("desired").key?("github.copilot-chat")
       end
     end
 
@@ -298,12 +295,13 @@ module Dotfiles
       EXPECTED_VALUES = {
         "core.sshcommand" => "~/.local/bin/git-secretive-ssh",
         "gpg.format" => "ssh",
-        "gpg.ssh.program" => "git-secretive-ssh-keygen",
         "gpg.ssh.allowedsignersfile" => "~/.config/git/allowed_signers",
+        "include.path" => "~/.config/git/secretive-program.gitconfig",
         "user.signingkey" => "~/.config/git/secretive_git_key.pub"
       }.freeze
       REQUIRED_TRUE_VALUES = %w[commit.gpgsign tag.gpgsign tag.forcesignannotated].freeze
       CLASSIC_GPG_KEYS = %w[gpg.program gpg.openpgp.program].freeze
+      GENERATED_LOCAL_KEYS = %w[gpg.ssh.program].freeze
       PRIVATE_KEY_PATH_PATTERN = %r{(^|/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\z|[._-])}.freeze
 
       def validate(root)
@@ -313,6 +311,7 @@ module Dotfiles
         failures.concat(expected_value_failures(config))
         failures.concat(required_true_failures(config))
         failures.concat(classic_gpg_failures(config))
+        failures.concat(generated_local_key_failures(config))
         failures.concat(signing_key_failures(config))
         raise Error, failures.join("\n") unless failures.empty?
 
@@ -343,6 +342,14 @@ module Dotfiles
           next unless config.key?(key)
 
           failures << "dotfiles/.gitconfig must not set classic GPG signing key #{key}"
+        end
+      end
+
+      def generated_local_key_failures(config)
+        GENERATED_LOCAL_KEYS.each_with_object([]) do |key, failures|
+          next unless config.key?(key)
+
+          failures << "dotfiles/.gitconfig must not set machine-local #{key}; script/install writes ~/.config/git/secretive-program.gitconfig"
         end
       end
 

@@ -34,21 +34,23 @@ _dotfiles_sfw_exec() {
     fi
 
     local clean_path
+    local sfw_bin
     clean_path="$(_dotfiles_sfw_path_without_shims)"
+    sfw_bin="${DOTFILES_SFW_BIN:-$HOME/.local/bin/sfw}"
 
     if [ "${DOTFILES_SFW_DISABLE:-0}" = "1" ]; then
         PATH="$clean_path" command "$cmd" "$@"
         return $?
     fi
 
-    if ! PATH="$clean_path" command -v sfw >/dev/null 2>&1; then
+    if [ ! -x "$sfw_bin" ]; then
         if [ "${DOTFILES_SFW_REQUIRE:-1}" = "1" ]; then
-            printf "dotfiles: refusing to run %s unprotected because sfw is unavailable\n" "$cmd" >&2
-            printf "dotfiles: install with: DOTFILES_SFW_DISABLE=1 npm i -g sfw && nodenv rehash\n" >&2
+            printf "dotfiles: refusing to run %s unprotected because DOTFILES_SFW_BIN is unavailable\n" "$cmd" >&2
+            printf "dotfiles: install with: script/socket-firewall install\n" >&2
             return 127
         fi
 
-        printf "dotfiles: warning: sfw unavailable; running %s unprotected\n" "$cmd" >&2
+        printf "dotfiles: warning: DOTFILES_SFW_BIN unavailable; running %s unprotected\n" "$cmd" >&2
         PATH="$clean_path" command "$cmd" "$@"
         return $?
     fi
@@ -58,7 +60,7 @@ _dotfiles_sfw_exec() {
         return 127
     fi
 
-    PATH="$clean_path" command sfw "$cmd" "$@"
+    PATH="$clean_path" "$sfw_bin" "$cmd" "$@"
 }
 
 sfw_status() {
@@ -70,6 +72,7 @@ sfw_status() {
 
     printf "Socket Firewall status\n"
     printf "  shim dir:     %s\n" "$shim_dir"
+    printf "  binary:       %s\n" "${DOTFILES_SFW_BIN:-$HOME/.local/bin/sfw}"
     printf "  require mode: %s\n" "${DOTFILES_SFW_REQUIRE:-1}"
     printf "  disabled:     %s\n" "${DOTFILES_SFW_DISABLE:-0}"
     printf "\n"

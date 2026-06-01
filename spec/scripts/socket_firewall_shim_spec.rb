@@ -40,6 +40,7 @@ RSpec.describe "Socket Firewall package-manager shim" do
         printf 'cmd=npm\\n' >> "$LOG"
       SH
       env = {
+        "DOTFILES_SFW_BIN" => File.join(real_dir, "sfw"),
         "DOTFILES_SFW_SHIM_DIR" => shim_dir,
         "DOTFILES_SFW_REQUIRE" => "1",
         "HOME" => dir,
@@ -77,6 +78,7 @@ RSpec.describe "Socket Firewall package-manager shim" do
         } >> "$LOG"
       SH
       env = {
+        "DOTFILES_SFW_BIN" => File.join(real_dir, "sfw"),
         "DOTFILES_SFW_SHIM_DIR" => shim_dir,
         "HOME" => dir,
         "LOG" => log,
@@ -116,6 +118,7 @@ RSpec.describe "Socket Firewall package-manager shim" do
       SH
       env = {
         "DOTFILES_SFW_DISABLE" => "1",
+        "DOTFILES_SFW_BIN" => File.join(real_dir, "sfw"),
         "DOTFILES_SFW_SHIM_DIR" => shim_dir,
         "HOME" => dir,
         "LOG" => log,
@@ -143,6 +146,7 @@ RSpec.describe "Socket Firewall package-manager shim" do
       write_executable(File.join(real_dir, "npm"), "#!/bin/sh\nexit 0\n")
       env = {
         "DOTFILES_SFW_SHIM_DIR" => shim_dir,
+        "DOTFILES_SFW_BIN" => File.join(real_dir, "missing-sfw"),
         "DOTFILES_SFW_REQUIRE" => "1",
         "HOME" => dir,
         "PATH" => [shim_dir, real_dir, "/bin", "/usr/bin"].join(File::PATH_SEPARATOR)
@@ -152,8 +156,8 @@ RSpec.describe "Socket Firewall package-manager shim" do
 
       expect(status.exitstatus).to eq(127)
       expect(stderr).to include(
-        "dotfiles-sfw-shim: refusing to run npm unprotected because sfw is unavailable",
-        "dotfiles-sfw-shim: install with: DOTFILES_SFW_DISABLE=1 npm i -g sfw && nodenv rehash"
+        "dotfiles-sfw-shim: refusing to run npm unprotected because DOTFILES_SFW_BIN is unavailable",
+        "dotfiles-sfw-shim: install with: script/socket-firewall install"
       )
     end
   end
@@ -166,6 +170,7 @@ RSpec.describe "Socket Firewall package-manager shim" do
       write_executable(File.join(real_dir, "npm"), "#!/bin/sh\nexit 0\n")
       env = {
         "DOTFILES_SFW_ACTIVE" => "1",
+        "DOTFILES_SFW_BIN" => File.join(real_dir, "missing-sfw"),
         "DOTFILES_SFW_SHIM_DIR" => shim_dir,
         "DOTFILES_SFW_REQUIRE" => "1",
         "HOME" => dir,
@@ -175,7 +180,7 @@ RSpec.describe "Socket Firewall package-manager shim" do
       _stdout, stderr, status = run_shim(env, shim_dir, "npm", "--version")
 
       expect(status.exitstatus).to eq(127)
-      expect(stderr).to include("dotfiles-sfw-shim: refusing to run npm unprotected because sfw is unavailable")
+      expect(stderr).to include("dotfiles-sfw-shim: refusing to run npm unprotected because DOTFILES_SFW_BIN is unavailable")
     end
   end
 end

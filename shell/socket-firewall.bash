@@ -6,6 +6,7 @@
 # directory outranks nodenv, pyenv, Cargo, and system package-manager paths.
 
 export DOTFILES_SFW_SHIM_DIR="${DOTFILES_SFW_SHIM_DIR:-$HOME/.local/share/dotfiles/sfw-shims}"
+export DOTFILES_SFW_BIN="${DOTFILES_SFW_BIN:-$HOME/.local/bin/sfw}"
 export DOTFILES_SFW_REQUIRE="${DOTFILES_SFW_REQUIRE:-1}"
 
 if [ "${DOTFILES_SFW_DISABLE:-0}" != "1" ]; then
