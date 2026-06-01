@@ -171,7 +171,7 @@ RSpec.describe Dotfiles::Entry do
       target = File.join(home, ".config/karabiner/karabiner.json")
       FileUtils.mkdir_p(File.dirname(target))
       data = JSON.parse(File.read(source))
-      data.fetch("profiles").first["devices"] = [{ "identifier" => "runtime" }]
+      data.fetch("profiles").first["virtual_hid_keyboard"] = { "keyboard_type_v2" => "ansi" }
       File.write(target, JSON.pretty_generate(data))
       karabiner = described_class.new(
         "id" => "karabiner",
@@ -182,6 +182,10 @@ RSpec.describe Dotfiles::Entry do
         "compare" => "karabiner"
       )
       expect(karabiner.target_matches?).to eq(true)
+
+      data.fetch("profiles").first["devices"] = [{ "identifier" => "runtime" }]
+      File.write(target, JSON.pretty_generate(data))
+      expect(karabiner.target_matches?).to eq(false)
     end
   end
 
