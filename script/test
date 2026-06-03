@@ -91,6 +91,32 @@ validate_public_safety() {
     "$ROOT/script/test-check" public-safety "$ROOT"
 }
 
+validate_set_secret_collision_guard() {
+    local candidate
+
+    for candidate in var_name target_var secret_value; do
+        CANDIDATE="$candidate" bash <<'BASH'
+set -euo pipefail
+
+source "shell/functions/secrets.bash"
+unset INJECTED
+unset -v "$CANDIDATE"
+
+set_secret "$CANDIDATE" <<<"INJECTED=1" >/dev/null
+
+if [ "${INJECTED-unset}" != "unset" ]; then
+    echo "set_secret exported injected assignment for $CANDIDATE" >&2
+    exit 1
+fi
+
+if [ "${!CANDIDATE}" != "INJECTED=1" ]; then
+    echo "set_secret did not assign $CANDIDATE" >&2
+    exit 1
+fi
+BASH
+    done
+}
+
 require_command bash
 require_command bundle
 require_command git
@@ -148,6 +174,8 @@ done < <(find local-bin -type f -print | sort)
 for shell_file in "${shell_files[@]}"; do
     bash -n "$shell_file"
 done
+
+validate_set_secret_collision_guard
 
 json_files=(
     "configs/karabiner/karabiner.json"
