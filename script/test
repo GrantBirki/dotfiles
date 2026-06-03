@@ -91,6 +91,50 @@ validate_public_safety() {
     "$ROOT/script/test-check" public-safety "$ROOT"
 }
 
+validate_set_secret_collision_guard() {
+    bash <<'BASH'
+set -euo pipefail
+
+source "shell/functions/secrets.bash"
+
+for candidate in var_name target_var secret_value "_dotfiles_set_secret_value_$$"; do
+    unset INJECTED
+    unset -v "$candidate"
+
+    set_secret "$candidate" <<<"INJECTED=1" >/dev/null
+
+    if [ "${INJECTED-unset}" != "unset" ]; then
+        echo "set_secret exported injected assignment for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "INJECTED=1" ]; then
+        echo "set_secret did not assign $candidate" >&2
+        exit 1
+    fi
+
+    unset INJECTED
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret "$candidate" < <(printf partial) >/dev/null 2>/dev/null; then
+        echo "set_secret succeeded on partial input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret clobbered $candidate after failed read" >&2
+        exit 1
+    fi
+
+    if [ "${INJECTED-unset}" != "unset" ]; then
+        echo "set_secret exported injected assignment after failed read for $candidate" >&2
+        exit 1
+    fi
+done
+BASH
+}
+
 require_command bash
 require_command bundle
 require_command git
@@ -148,6 +192,8 @@ done < <(find local-bin -type f -print | sort)
 for shell_file in "${shell_files[@]}"; do
     bash -n "$shell_file"
 done
+
+validate_set_secret_collision_guard
 
 json_files=(
     "configs/karabiner/karabiner.json"
