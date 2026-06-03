@@ -9,11 +9,20 @@ set_secret() {
         return 2
     fi
 
-    if ! read -rs -p "${1}=" "$1"; then
+    set -- "$1" "_dotfiles_set_secret_value_$$"
+    while [ "$1" = "$2" ]; do
+        set -- "$1" "${2}_x"
+    done
+
+    local "$2"
+    if ! read -rs -p "${1}=" "$2"; then
         echo >&2
+        unset "$2"
         return 1
     fi
     echo
 
+    printf -v "$1" '%s' "${!2}"
+    unset "$2"
     export "$1"
 }

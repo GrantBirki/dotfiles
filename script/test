@@ -92,29 +92,47 @@ validate_public_safety() {
 }
 
 validate_set_secret_collision_guard() {
-    local candidate
-
-    for candidate in var_name target_var secret_value; do
-        CANDIDATE="$candidate" bash <<'BASH'
+    bash <<'BASH'
 set -euo pipefail
 
 source "shell/functions/secrets.bash"
-unset INJECTED
-unset -v "$CANDIDATE"
 
-set_secret "$CANDIDATE" <<<"INJECTED=1" >/dev/null
+for candidate in var_name target_var secret_value "_dotfiles_set_secret_value_$$"; do
+    unset INJECTED
+    unset -v "$candidate"
 
-if [ "${INJECTED-unset}" != "unset" ]; then
-    echo "set_secret exported injected assignment for $CANDIDATE" >&2
-    exit 1
-fi
+    set_secret "$candidate" <<<"INJECTED=1" >/dev/null
 
-if [ "${!CANDIDATE}" != "INJECTED=1" ]; then
-    echo "set_secret did not assign $CANDIDATE" >&2
-    exit 1
-fi
+    if [ "${INJECTED-unset}" != "unset" ]; then
+        echo "set_secret exported injected assignment for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "INJECTED=1" ]; then
+        echo "set_secret did not assign $candidate" >&2
+        exit 1
+    fi
+
+    unset INJECTED
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret "$candidate" < <(printf partial) >/dev/null 2>/dev/null; then
+        echo "set_secret succeeded on partial input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret clobbered $candidate after failed read" >&2
+        exit 1
+    fi
+
+    if [ "${INJECTED-unset}" != "unset" ]; then
+        echo "set_secret exported injected assignment after failed read for $candidate" >&2
+        exit 1
+    fi
+done
 BASH
-    done
 }
 
 require_command bash
