@@ -131,7 +131,84 @@ for candidate in var_name target_var secret_value "_dotfiles_set_secret_value_$$
         echo "set_secret exported injected assignment after failed read for $candidate" >&2
         exit 1
     fi
+
+    set_secret --confirm "$candidate" <<'INPUT' >/dev/null
+matching value
+matching value
+INPUT
+
+    if [ "${!candidate}" != "matching value" ]; then
+        echo "set_secret --confirm did not assign matching input for $candidate" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret --confirm "$candidate" <<'INPUT' >/dev/null 2>/dev/null
+first value
+second value
+INPUT
+    then
+        echo "set_secret --confirm succeeded on mismatched input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret --confirm clobbered $candidate after mismatch" >&2
+        exit 1
+    fi
+
+    set_secret --confirm=3 "$candidate" <<'INPUT' >/dev/null
+triple value
+triple value
+triple value
+INPUT
+
+    if [ "${!candidate}" != "triple value" ]; then
+        echo "set_secret --confirm=3 did not assign matching input for $candidate" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret --confirm=3 "$candidate" <<'INPUT' >/dev/null 2>/dev/null
+triple value
+triple value
+mismatch
+INPUT
+    then
+        echo "set_secret --confirm=3 succeeded on mismatched input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret --confirm=3 clobbered $candidate after mismatch" >&2
+        exit 1
+    fi
 done
+
+if set_secret --confirm=4 invalid_count >/dev/null 2>/dev/null; then
+    echo "set_secret accepted invalid confirm count" >&2
+    exit 1
+fi
+
+trace_output="$({
+    set -x
+    set_secret --confirm trace_candidate <<'INPUT' >/dev/null
+trace value
+trace value
+INPUT
+    set +x
+} 2>&1)"
+
+case "$trace_output" in
+    *"trace value"*)
+        echo "set_secret leaked prompted input through xtrace" >&2
+        exit 1
+        ;;
+esac
 BASH
 }
 
