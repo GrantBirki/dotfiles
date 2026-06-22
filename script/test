@@ -113,6 +113,28 @@ for candidate in var_name target_var secret_value "_dotfiles_set_secret_value_$$
         exit 1
     fi
 
+    if ! env | LC_ALL=C grep -Fqx "$candidate=INJECTED=1"; then
+        echo "set_secret did not export $candidate by default" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' exported_old
+    export "$candidate"
+
+    set_secret --no-export "$candidate" <<'INPUT' >/dev/null
+shell local value
+INPUT
+
+    if [ "${!candidate}" != "shell local value" ]; then
+        echo "set_secret --no-export did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if env | LC_ALL=C grep -Fqx "$candidate=shell local value"; then
+        echo "set_secret --no-export exported $candidate" >&2
+        exit 1
+    fi
+
     unset INJECTED
     printf -v "$candidate" '%s' old
     export "$candidate"
@@ -142,6 +164,29 @@ INPUT
         exit 1
     fi
 
+    if ! env | LC_ALL=C grep -Fqx "$candidate=matching value"; then
+        echo "set_secret --confirm did not export $candidate by default" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' exported_old
+    export "$candidate"
+
+    set_secret --confirm --no-export "$candidate" <<'INPUT' >/dev/null
+confirmed local value
+confirmed local value
+INPUT
+
+    if [ "${!candidate}" != "confirmed local value" ]; then
+        echo "set_secret --confirm --no-export did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if env | LC_ALL=C grep -Fqx "$candidate=confirmed local value"; then
+        echo "set_secret --confirm --no-export exported $candidate" >&2
+        exit 1
+    fi
+
     printf -v "$candidate" '%s' old
     export "$candidate"
 
@@ -167,6 +212,25 @@ INPUT
 
     if [ "${!candidate}" != "triple value" ]; then
         echo "set_secret --confirm=3 did not assign matching input for $candidate" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' exported_old
+    export "$candidate"
+
+    set_secret --confirm=3 --no-export "$candidate" <<'INPUT' >/dev/null
+triple local value
+triple local value
+triple local value
+INPUT
+
+    if [ "${!candidate}" != "triple local value" ]; then
+        echo "set_secret --confirm=3 --no-export did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if env | LC_ALL=C grep -Fqx "$candidate=triple local value"; then
+        echo "set_secret --confirm=3 --no-export exported $candidate" >&2
         exit 1
     fi
 
