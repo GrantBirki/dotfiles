@@ -1191,6 +1191,54 @@
                         ]
                     },
                     {
+                        "description": "Left+Right Alt to Left+Right Command (Mechanical keyboards)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [
+                                            {
+                                                "is_keyboard": true,
+                                                "product_id": 4641,
+                                                "vendor_id": 17498
+                                            },
+                                            {
+                                                "is_keyboard": true,
+                                                "product_id": 22019,
+                                                "vendor_id": 28533
+                                            }
+                                        ],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": {
+                                    "modifiers": {
+                                        "optional": [
+                                            "any"
+                                        ]
+                                    },
+                                    "simultaneous": [
+                                        {
+                                            "key_code": "left_option"
+                                        },
+                                        {
+                                            "key_code": "right_option"
+                                        }
+                                    ]
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "left_command",
+                                        "modifiers": [
+                                            "right_command"
+                                        ]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Alt+Tab (Mechanical keyboards)",
                         "manipulators": [
                             {
