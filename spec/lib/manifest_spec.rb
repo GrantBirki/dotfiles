@@ -185,6 +185,10 @@ RSpec.describe Dotfiles::Entry do
 
       data.fetch("profiles").first["devices"] = [{ "identifier" => "runtime" }]
       File.write(target, JSON.pretty_generate(data))
+      expect(karabiner.target_matches?).to eq(true)
+
+      data.fetch("profiles").first["name"] = "different"
+      File.write(target, JSON.pretty_generate(data))
       expect(karabiner.target_matches?).to eq(false)
     end
   end
