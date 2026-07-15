@@ -190,6 +190,7 @@ module Dotfiles
     def normalized_karabiner(path)
       data = JSON.parse(File.read(path))
       Array(data["profiles"]).each do |profile|
+        profile.delete("devices")
         profile.delete("virtual_hid_keyboard")
       end
       data
