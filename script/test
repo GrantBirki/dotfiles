@@ -91,6 +91,191 @@ validate_public_safety() {
     "$ROOT/script/test-check" public-safety "$ROOT"
 }
 
+validate_set_secret_collision_guard() {
+    bash <<'BASH'
+set -euo pipefail
+
+source "shell/functions/secrets.bash"
+
+for candidate in var_name target_var secret_value "_dotfiles_set_secret_value_$$"; do
+    unset INJECTED
+    unset -v "$candidate"
+
+    set_secret "$candidate" <<<"INJECTED=1" >/dev/null
+
+    if [ "${INJECTED-unset}" != "unset" ]; then
+        echo "set_secret exported injected assignment for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "INJECTED=1" ]; then
+        echo "set_secret did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if ! env | LC_ALL=C grep -Fqx "$candidate=INJECTED=1"; then
+        echo "set_secret did not export $candidate by default" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' exported_old
+    export "$candidate"
+
+    set_secret --no-export "$candidate" <<'INPUT' >/dev/null
+shell local value
+INPUT
+
+    if [ "${!candidate}" != "shell local value" ]; then
+        echo "set_secret --no-export did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if env | LC_ALL=C grep -Fqx "$candidate=shell local value"; then
+        echo "set_secret --no-export exported $candidate" >&2
+        exit 1
+    fi
+
+    unset INJECTED
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret "$candidate" < <(printf partial) >/dev/null 2>/dev/null; then
+        echo "set_secret succeeded on partial input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret clobbered $candidate after failed read" >&2
+        exit 1
+    fi
+
+    if [ "${INJECTED-unset}" != "unset" ]; then
+        echo "set_secret exported injected assignment after failed read for $candidate" >&2
+        exit 1
+    fi
+
+    set_secret --confirm "$candidate" <<'INPUT' >/dev/null
+matching value
+matching value
+INPUT
+
+    if [ "${!candidate}" != "matching value" ]; then
+        echo "set_secret --confirm did not assign matching input for $candidate" >&2
+        exit 1
+    fi
+
+    if ! env | LC_ALL=C grep -Fqx "$candidate=matching value"; then
+        echo "set_secret --confirm did not export $candidate by default" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' exported_old
+    export "$candidate"
+
+    set_secret --confirm --no-export "$candidate" <<'INPUT' >/dev/null
+confirmed local value
+confirmed local value
+INPUT
+
+    if [ "${!candidate}" != "confirmed local value" ]; then
+        echo "set_secret --confirm --no-export did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if env | LC_ALL=C grep -Fqx "$candidate=confirmed local value"; then
+        echo "set_secret --confirm --no-export exported $candidate" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret --confirm "$candidate" <<'INPUT' >/dev/null 2>/dev/null
+first value
+second value
+INPUT
+    then
+        echo "set_secret --confirm succeeded on mismatched input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret --confirm clobbered $candidate after mismatch" >&2
+        exit 1
+    fi
+
+    set_secret --confirm=3 "$candidate" <<'INPUT' >/dev/null
+triple value
+triple value
+triple value
+INPUT
+
+    if [ "${!candidate}" != "triple value" ]; then
+        echo "set_secret --confirm=3 did not assign matching input for $candidate" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' exported_old
+    export "$candidate"
+
+    set_secret --confirm=3 --no-export "$candidate" <<'INPUT' >/dev/null
+triple local value
+triple local value
+triple local value
+INPUT
+
+    if [ "${!candidate}" != "triple local value" ]; then
+        echo "set_secret --confirm=3 --no-export did not assign $candidate" >&2
+        exit 1
+    fi
+
+    if env | LC_ALL=C grep -Fqx "$candidate=triple local value"; then
+        echo "set_secret --confirm=3 --no-export exported $candidate" >&2
+        exit 1
+    fi
+
+    printf -v "$candidate" '%s' old
+    export "$candidate"
+
+    if set_secret --confirm=3 "$candidate" <<'INPUT' >/dev/null 2>/dev/null
+triple value
+triple value
+mismatch
+INPUT
+    then
+        echo "set_secret --confirm=3 succeeded on mismatched input for $candidate" >&2
+        exit 1
+    fi
+
+    if [ "${!candidate}" != "old" ]; then
+        echo "set_secret --confirm=3 clobbered $candidate after mismatch" >&2
+        exit 1
+    fi
+done
+
+if set_secret --confirm=4 invalid_count >/dev/null 2>/dev/null; then
+    echo "set_secret accepted invalid confirm count" >&2
+    exit 1
+fi
+
+trace_output="$({
+    set -x
+    set_secret --confirm trace_candidate <<'INPUT' >/dev/null
+trace value
+trace value
+INPUT
+    set +x
+} 2>&1)"
+
+case "$trace_output" in
+    *"trace value"*)
+        echo "set_secret leaked prompted input through xtrace" >&2
+        exit 1
+        ;;
+esac
+BASH
+}
+
 require_command bash
 require_command bundle
 require_command git
@@ -148,6 +333,8 @@ done < <(find local-bin -type f -print | sort)
 for shell_file in "${shell_files[@]}"; do
     bash -n "$shell_file"
 done
+
+validate_set_secret_collision_guard
 
 json_files=(
     "configs/karabiner/karabiner.json"
