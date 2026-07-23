@@ -12,17 +12,11 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - name: harden runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # pin@v2.19.3
+      - uses: openai/fence@db291f5c51949e6e6ec1634621b36dc4bbf3d54a # pin@v0.8.7
         with:
-          egress-policy: block
-          disable-telemetry: true
-          allowed-endpoints: >
-            github.com:443
-            release-assets.githubusercontent.com:443
-          disable-sudo-and-containers: true
+          mode: audit
 
       - name: checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6
